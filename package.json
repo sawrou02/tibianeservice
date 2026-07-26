@@ -1,0 +1,19 @@
+{
+  "name": "tibianeservice-preinscription",
+  "version": "1.0.0",
+  "description": "Site de préinscription en ligne pour TIBIANE SERVICE (formulaire + base de données)",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "express": "^4.21.0"
+  },
+  "license": "MIT"
+}
