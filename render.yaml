@@ -1,0 +1,25 @@
+# Configuration de déploiement GRATUIT pour Render (https://render.com)
+# Le serveur tourne sur le plan gratuit de Render, et les données sont
+# conservées en permanence dans une base de données gratuite Turso (libSQL).
+#
+# Avant de déployer, créez une base Turso (voir README) puis renseignez
+# TURSO_DATABASE_URL et TURSO_AUTH_TOKEN au moment de la mise en ligne.
+services:
+  - type: web
+    name: tibiane-preinscription
+    runtime: node
+    plan: free               # hébergement gratuit
+    region: frankfurt        # région proche (Europe/Afrique) — modifiable
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: TURSO_DATABASE_URL
+        sync: false          # adresse de la base Turso (à saisir à la mise en ligne)
+      - key: TURSO_AUTH_TOKEN
+        sync: false          # jeton d'accès de la base Turso (à saisir à la mise en ligne)
+      - key: ADMIN_USER
+        value: admin         # identifiant de la page d'administration (modifiable)
+      - key: ADMIN_PASSWORD
+        sync: false          # mot de passe admin : à saisir lors de la mise en ligne

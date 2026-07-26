@@ -1,0 +1,205 @@
+:root {
+  --primary: #0b6e4f;
+  --primary-dark: #084f39;
+  --accent: #f4a300;
+  --bg: #f5f7f6;
+  --card: #ffffff;
+  --text: #1f2933;
+  --muted: #66757f;
+  --border: #d6dee0;
+  --error: #c0392b;
+  --success: #0b6e4f;
+  --radius: 10px;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.55;
+}
+
+.container {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* En-tête */
+.site-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  padding: 32px 0;
+  text-align: center;
+}
+.site-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: 1px;
+}
+.site-header .tagline {
+  margin: 6px 0 0;
+  opacity: 0.9;
+}
+
+/* Introduction */
+.intro {
+  margin: 32px 0 20px;
+}
+.intro h2 { margin: 0 0 8px; color: var(--primary-dark); }
+.intro p { color: var(--muted); margin: 0; }
+
+/* Formulaire */
+form {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  margin-bottom: 40px;
+}
+
+fieldset {
+  border: none;
+  border-top: 2px solid var(--border);
+  padding: 16px 0 4px;
+  margin: 0 0 8px;
+}
+fieldset:first-of-type { border-top: none; padding-top: 0; }
+
+legend {
+  font-weight: 700;
+  color: var(--primary-dark);
+  padding: 0;
+  font-size: 1.05rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 8px;
+}
+.field-full { grid-column: 1 / -1; }
+
+@media (max-width: 600px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 0.92rem;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(11, 110, 79, 0.15);
+}
+.field textarea { resize: vertical; }
+
+.req { color: var(--error); }
+
+.hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* Consentement */
+.consent {
+  margin-top: 8px;
+  background: #f0f5f3;
+  padding: 14px;
+  border-radius: 8px;
+}
+.consent label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.consent input { width: auto; margin-top: 3px; flex-shrink: 0; }
+
+/* Boutons */
+.btn-submit,
+.btn-secondary {
+  display: inline-block;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding: 14px 24px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.05s;
+}
+.btn-submit {
+  background: var(--accent);
+  color: #1f2933;
+  width: 100%;
+  margin-top: 20px;
+}
+.btn-submit:hover { background: #dd9100; }
+.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-submit:active { transform: translateY(1px); }
+
+.btn-secondary {
+  background: var(--primary);
+  color: #fff;
+}
+.btn-secondary:hover { background: var(--primary-dark); }
+
+/* Messages */
+.errors {
+  background: #fdecea;
+  border: 1px solid var(--error);
+  color: var(--error);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 16px;
+}
+.errors ul { margin: 6px 0 0; padding-left: 20px; }
+
+.success {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 40px 24px;
+  text-align: center;
+  margin-bottom: 40px;
+}
+.success h2 { color: var(--success); margin-top: 0; }
+
+/* Pied de page */
+.site-footer {
+  background: var(--primary-dark);
+  color: #fff;
+  text-align: center;
+  padding: 20px 0;
+  font-size: 0.9rem;
+}
+.site-footer p { margin: 0; }

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Préinscription — TIBIANE SERVICE</title>
+  <meta name="description" content="Formulaire de préinscription en ligne pour les formations de TIBIANE SERVICE.">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1>TIBIANE SERVICE</h1>
+      <p class="tagline">Formulaire de préinscription</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="intro">
+      <h2>Faites votre préinscription en ligne</h2>
+      <p>Remplissez le formulaire ci-dessous pour vous préinscrire à l'une de nos formations.
+         Les champs marqués d'un astérisque (<span class="req">*</span>) sont obligatoires.</p>
+    </section>
+
+    <form id="preinscription-form" novalidate>
+      <fieldset>
+        <legend>Identité</legend>
+
+        <div class="grid">
+          <div class="field">
+            <label for="nom">Nom <span class="req">*</span></label>
+            <input type="text" id="nom" name="nom" autocomplete="family-name" required>
+          </div>
+          <div class="field">
+            <label for="prenom">Prénom <span class="req">*</span></label>
+            <input type="text" id="prenom" name="prenom" autocomplete="given-name" required>
+          </div>
+          <div class="field">
+            <label for="date_naissance">Date de naissance <span class="req">*</span></label>
+            <input type="date" id="date_naissance" name="date_naissance" required>
+          </div>
+          <div class="field">
+            <label for="lieu_naissance">Lieu de naissance <span class="req">*</span></label>
+            <input type="text" id="lieu_naissance" name="lieu_naissance" required>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Parcours &amp; formation</legend>
+
+        <div class="grid">
+          <div class="field">
+            <label for="niveau_etude">Niveau d'étude</label>
+            <select id="niveau_etude" name="niveau_etude">
+              <option value="">— Sélectionnez —</option>
+              <option>Aucun</option>
+              <option>Primaire</option>
+              <option>Collège / Brevet</option>
+              <option>Lycée / Baccalauréat</option>
+              <option>Bac +2 (BTS, DUT, DEUG)</option>
+              <option>Bac +3 (Licence)</option>
+              <option>Bac +5 (Master, Ingénieur)</option>
+              <option>Doctorat</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="dernier_diplome">Dernier diplôme obtenu</label>
+            <input type="text" id="dernier_diplome" name="dernier_diplome" placeholder="Ex : Baccalauréat, Licence…">
+          </div>
+          <div class="field field-full">
+            <label for="formation">Formation souhaitée <span class="req">*</span></label>
+            <input type="text" id="formation" name="formation" placeholder="Écrivez ici la formation que vous souhaitez suivre…" required>
+            <small class="hint">Indiquez librement la formation de votre choix.</small>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Coordonnées</legend>
+
+        <div class="grid">
+          <div class="field">
+            <label for="whatsapp">Numéro WhatsApp <span class="req">*</span></label>
+            <input type="tel" id="whatsapp" name="whatsapp" placeholder="Ex : +33 6 12 34 56 78" autocomplete="tel" required>
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" autocomplete="email" placeholder="exemple@email.com">
+          </div>
+          <div class="field field-full">
+            <label for="adresse">Adresse postale</label>
+            <input type="text" id="adresse" name="adresse" autocomplete="street-address">
+          </div>
+          <div class="field field-full">
+            <label for="message">Message / commentaire</label>
+            <textarea id="message" name="message" rows="3"></textarea>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="field field-full consent">
+        <label>
+          <input type="checkbox" id="consentement" name="consentement" required>
+          J'accepte que mes données personnelles soient collectées et traitées par TIBIANE SERVICE
+          dans le cadre de ma préinscription. <span class="req">*</span>
+        </label>
+      </div>
+
+      <div id="form-errors" class="errors" role="alert" hidden></div>
+
+      <button type="submit" class="btn-submit">Envoyer ma préinscription</button>
+    </form>
+
+    <div id="success-message" class="success" hidden>
+      <h2>✅ Préinscription enregistrée&nbsp;!</h2>
+      <p>Merci, votre demande de préinscription a bien été reçue. Nous vous contacterons prochainement.</p>
+      <button type="button" id="new-form" class="btn-secondary">Faire une nouvelle préinscription</button>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; <span id="year"></span> TIBIANE SERVICE — Tous droits réservés.</p>
+    </div>
+  </footer>
+
+  <script src="/js/form.js"></script>
+</body>
+</html>
