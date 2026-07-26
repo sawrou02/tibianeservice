@@ -120,6 +120,14 @@ legend {
 
 .req { color: var(--error); }
 
+.hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
 /* Consentement */
 .consent {
   margin-top: 8px;
