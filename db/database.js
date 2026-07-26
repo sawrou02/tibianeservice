@@ -4,8 +4,12 @@ const path = require('path');
 const fs = require('fs');
 const Database = require('better-sqlite3');
 
-// Le fichier de base de données est stocké dans le dossier /data (ignoré par git).
-const dataDir = path.join(__dirname, '..', 'data');
+// Le fichier de base de données est stocké dans un dossier de données.
+// En local : ./data (ignoré par git). En ligne : le dossier du disque
+// persistant de l'hébergeur, indiqué par la variable d'environnement DATA_DIR.
+const dataDir = process.env.DATA_DIR
+  ? path.resolve(process.env.DATA_DIR)
+  : path.join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }

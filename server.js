@@ -131,6 +131,12 @@ app.get('/api/preinscriptions/export', requireAuth, (req, res) => {
   res.send(csv);
 });
 
+// --- Vérification d'état (utilisée par l'hébergeur) ----------------------
+
+app.get('/healthz', (req, res) => {
+  res.json({ ok: true });
+});
+
 // --- Pages ---------------------------------------------------------------
 
 // La page d'administration est protégée par mot de passe.
