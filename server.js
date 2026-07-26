@@ -2,7 +2,7 @@
 
 const path = require('path');
 const express = require('express');
-const db = require('./db/database');
+const { client: db, init: initDb } = require('./db/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -46,7 +46,7 @@ function requireAuth(req, res, next) {
 
 // --- API : enregistrement d'une préinscription ---------------------------
 
-app.post('/api/preinscriptions', (req, res) => {
+app.post('/api/preinscriptions', async (req, res) => {
   const data = {
     nom: clean(req.body.nom),
     prenom: clean(req.body.prenom),
@@ -80,16 +80,20 @@ app.post('/api/preinscriptions', (req, res) => {
   }
 
   try {
-    const stmt = db.prepare(`
-      INSERT INTO preinscriptions
-        (nom, prenom, date_naissance, lieu_naissance, niveau_etude,
-         dernier_diplome, formation, whatsapp, email, adresse, message, consentement)
-      VALUES
-        (@nom, @prenom, @date_naissance, @lieu_naissance, @niveau_etude,
-         @dernier_diplome, @formation, @whatsapp, @email, @adresse, @message, @consentement)
-    `);
-    const info = stmt.run(data);
-    return res.status(201).json({ ok: true, id: info.lastInsertRowid });
+    const info = await db.execute({
+      sql: `
+        INSERT INTO preinscriptions
+          (nom, prenom, date_naissance, lieu_naissance, niveau_etude,
+           dernier_diplome, formation, whatsapp, email, adresse, message, consentement)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      args: [
+        data.nom, data.prenom, data.date_naissance, data.lieu_naissance,
+        data.niveau_etude, data.dernier_diplome, data.formation, data.whatsapp,
+        data.email, data.adresse, data.message, data.consentement,
+      ],
+    });
+    return res.status(201).json({ ok: true, id: Number(info.lastInsertRowid) });
   } catch (err) {
     console.error('Erreur enregistrement préinscription:', err);
     return res.status(500).json({ ok: false, errors: ["Une erreur interne s'est produite."] });
@@ -98,15 +102,17 @@ app.post('/api/preinscriptions', (req, res) => {
 
 // --- API : liste des préinscriptions (protégée) --------------------------
 
-app.get('/api/preinscriptions', requireAuth, (req, res) => {
-  const rows = db.prepare('SELECT * FROM preinscriptions ORDER BY date_soumission DESC').all();
+app.get('/api/preinscriptions', requireAuth, async (req, res) => {
+  const result = await db.execute('SELECT * FROM preinscriptions ORDER BY date_soumission DESC');
+  const rows = result.rows;
   res.json({ ok: true, count: rows.length, data: rows });
 });
 
 // --- API : export CSV (protégé) ------------------------------------------
 
-app.get('/api/preinscriptions/export', requireAuth, (req, res) => {
-  const rows = db.prepare('SELECT * FROM preinscriptions ORDER BY date_soumission DESC').all();
+app.get('/api/preinscriptions/export', requireAuth, async (req, res) => {
+  const result = await db.execute('SELECT * FROM preinscriptions ORDER BY date_soumission DESC');
+  const rows = result.rows;
 
   const headers = [
     'id', 'nom', 'prenom', 'date_naissance', 'lieu_naissance', 'niveau_etude',
@@ -147,7 +153,14 @@ app.get('/admin', requireAuth, (req, res) => {
 // Fichiers statiques (formulaire public, CSS, JS).
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.listen(PORT, () => {
-  console.log(`Serveur TIBIANE SERVICE démarré sur http://localhost:${PORT}`);
-  console.log(`Page d'administration : http://localhost:${PORT}/admin`);
-});
+initDb()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Serveur TIBIANE SERVICE démarré sur http://localhost:${PORT}`);
+      console.log(`Page d'administration : http://localhost:${PORT}/admin`);
+    });
+  })
+  .catch((err) => {
+    console.error('Impossible d\'initialiser la base de données :', err);
+    process.exit(1);
+  });
