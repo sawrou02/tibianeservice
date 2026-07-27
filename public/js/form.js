@@ -12,8 +12,8 @@ const docsFieldset = document.getElementById('documents-fieldset');
 const docsContainer = document.getElementById('documents-container');
 
 let requirements = null;
-const ALLOWED_EXT = ['pdf', 'jpg', 'jpeg', 'png'];
-const MAX_BYTES = 500 * 1024;
+const DEFAULT_FORMATS = ['pdf', 'jpg', 'jpeg', 'png'];
+const DEFAULT_MAX_BYTES = 500 * 1024;
 
 function showErrors(messages) {
   errorsBox.innerHTML =
@@ -34,23 +34,27 @@ function checkFile(input) {
   const status = item.querySelector('.doc-status');
   const file = input.files && input.files[0];
 
+  const formats = (input.dataset.formats || DEFAULT_FORMATS.join(',')).split(',');
+  const maxBytes = Number(input.dataset.maxbytes) || DEFAULT_MAX_BYTES;
+  const maxKo = Math.round(maxBytes / 1024);
+
   item.classList.remove('filled', 'invalid');
   status.className = 'doc-status';
   status.textContent = '';
 
   if (!file) return;
 
-  if (!ALLOWED_EXT.includes(fileExt(file.name))) {
+  if (!formats.includes(fileExt(file.name))) {
     item.classList.add('invalid');
     status.classList.add('err');
-    status.textContent = 'Format non accepté (PDF, JPG ou PNG uniquement).';
+    status.textContent = `Format non accepté (${formats.join(', ').toUpperCase()} uniquement).`;
     input.value = '';
     return;
   }
-  if (file.size > MAX_BYTES) {
+  if (file.size > maxBytes) {
     item.classList.add('invalid');
     status.classList.add('err');
-    status.textContent = `Fichier trop lourd (${Math.round(file.size / 1024)} Ko). Maximum 500 Ko.`;
+    status.textContent = `Fichier trop lourd (${Math.round(file.size / 1024)} Ko). Maximum ${maxKo} Ko.`;
     input.value = '';
     return;
   }
@@ -59,7 +63,13 @@ function checkFile(input) {
   status.textContent = `✓ ${file.name} (${Math.round(file.size / 1024)} Ko)`;
 }
 
-function docItem(fieldName, label, required) {
+function docItem(fieldName, doc) {
+  const required = !!doc.required;
+  const formats = doc.formats && doc.formats.length ? doc.formats : DEFAULT_FORMATS;
+  const maxBytes = doc.maxBytes || DEFAULT_MAX_BYTES;
+  const maxKo = Math.round(maxBytes / 1024);
+  const accept = formats.map((f) => '.' + f).join(',');
+
   const wrap = document.createElement('div');
   wrap.className = 'doc-item';
   const reqTag = required
@@ -67,10 +77,11 @@ function docItem(fieldName, label, required) {
     : '<span class="doc-opt">Facultatif</span>';
   wrap.innerHTML = `
     <div class="doc-head">
-      <span class="doc-label">${label}</span>
+      <span class="doc-label">${doc.label}</span>
       ${reqTag}
     </div>
-    <input type="file" name="${fieldName}" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"${required ? ' data-required="1"' : ''}>
+    <input type="file" name="${fieldName}" accept="${accept}" data-formats="${formats.join(',')}" data-maxbytes="${maxBytes}"${required ? ' data-required="1"' : ''}>
+    <span class="doc-hint">${formats.join(', ').toUpperCase()} • max ${maxKo} Ko</span>
     <span class="doc-status"></span>
   `;
   wrap.querySelector('input').addEventListener('change', (e) => checkFile(e.target));
@@ -85,7 +96,7 @@ function renderDocuments(niveau) {
     return;
   }
   list.forEach((doc, i) => {
-    docsContainer.appendChild(docItem(`doc_${i}`, doc.label, doc.required));
+    docsContainer.appendChild(docItem(`doc_${i}`, doc));
   });
 
   const extra = (requirements && requirements.optionalExtra) || 0;
@@ -99,7 +110,7 @@ function renderDocuments(niveau) {
     hint.textContent = 'Ex : attestation de stage, certificat de travail, test d\'anglais, score IAE…';
     docsContainer.appendChild(hint);
     for (let i = 0; i < extra; i += 1) {
-      docsContainer.appendChild(docItem(`extra_${i}`, `Document supplémentaire ${i + 1}`, false));
+      docsContainer.appendChild(docItem(`extra_${i}`, { label: `Document supplémentaire ${i + 1}`, required: false }));
     }
   }
   docsFieldset.hidden = false;

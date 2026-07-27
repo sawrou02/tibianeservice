@@ -45,8 +45,15 @@
           <span class="fee-amount">100 000 FCFA</span>
           <span class="fee-label">Frais de dossier &amp; soumission (cabinet)</span>
           <ul class="fee-detail">
-            <li>1ʳᵉ tranche : <strong>avant l'ouverture du dossier</strong></li>
-            <li>2ᵉ tranche : <strong>avant l'entretien Campus France</strong></li>
+            <li><strong>50 000</strong> : frais d'ouverture, jusqu'à la soumission</li>
+            <li><strong>50 000</strong> : après l'entretien Campus France</li>
+          </ul>
+        </div>
+        <div class="fee-card">
+          <span class="fee-amount">50 000 FCFA</span>
+          <span class="fee-label">Honoraires du cabinet</span>
+          <ul class="fee-detail">
+            <li>À régler <strong>après l'obtention de l'admission</strong></li>
           </ul>
         </div>
         <div class="fee-card">
@@ -99,14 +106,12 @@
             <label for="niveau_etude">Niveau d'étude</label>
             <select id="niveau_etude" name="niveau_etude">
               <option value="">— Sélectionnez —</option>
-              <option>Aucun</option>
-              <option>Primaire</option>
-              <option>Collège / Brevet</option>
-              <option>Lycée / Baccalauréat</option>
-              <option>Bac +2 (BTS, DUT, DEUG)</option>
-              <option>Bac +3 (Licence)</option>
-              <option>Bac +5 (Master, Ingénieur)</option>
-              <option>Doctorat</option>
+              <option>Baccalauréat</option>
+              <option>Licence 1 (L1)</option>
+              <option>Licence 2 (L2)</option>
+              <option>Licence 3 (L3)</option>
+              <option>Master 1 (M1)</option>
+              <option>Master 2 (M2)</option>
             </select>
           </div>
           <div class="field">
@@ -158,8 +163,10 @@
         <legend><span class="step">4</span> Pièces à fournir</legend>
         <p class="docs-intro">
           Choisissez d'abord votre <strong>niveau sollicité</strong> ci-dessus, puis déposez
-          chaque document demandé (un fichier par pièce). Formats acceptés :
-          <strong>PDF, JPG ou PNG</strong>, lisibles et <strong>≤ 500 Ko</strong> par fichier.
+          chaque document demandé (un fichier par pièce). Documents lisibles :
+          <strong>PDF, JPG ou PNG</strong>, <strong>≤ 500 Ko</strong> — sauf la
+          <strong>photo d'identité</strong> qui doit être en <strong>PNG</strong> et <strong>≤ 50 Ko</strong>.
+          La taille indiquée sous chaque champ est à respecter.
         </p>
         <div id="documents-container"></div>
       </fieldset>

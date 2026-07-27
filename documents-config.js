@@ -8,9 +8,27 @@
 
 const NIVEAUX = ['Licence 1', 'Licence 2', 'Licence 3', 'Master 1', 'Master 2'];
 
-const PHOTO = { label: "Une photo d'identité", required: true };
+// Contraintes de fichier.
+const MAX_FILE_BYTES = 500 * 1024; // 500 Ko par défaut
+const PHOTO_MAX_BYTES = 50 * 1024; // 50 Ko pour la photo d'identité
+const ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png'];
+const ALLOWED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png'];
+const EXT_MIME = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png' };
+
+// La photo d'identité doit être au format PNG et ne pas dépasser 50 Ko.
+const PHOTO = {
+  label: "Une photo d'identité (format PNG, 50 Ko max)",
+  required: true,
+  formats: ['png'],
+  maxBytes: PHOTO_MAX_BYTES,
+};
 const PIECE = { label: "Pièce d'identité ou récépissé de dépôt de la demande", required: true };
 const BAC = { label: "Relevé de notes du BAC + attestation de réussite au BAC", required: true };
+
+// Renvoie les types MIME autorisés pour une liste de formats (extensions).
+function mimesForFormats(formats) {
+  return (formats || ALLOWED_EXTENSIONS).map((f) => EXT_MIME[f]).filter(Boolean);
+}
 
 const DOCUMENTS_BY_LEVEL = {
   'Licence 1': [
@@ -61,16 +79,14 @@ const DOCUMENTS_BY_LEVEL = {
 // Nombre de champs « document supplémentaire (facultatif) » proposés au candidat.
 const OPTIONAL_EXTRA = 3;
 
-// Contraintes de fichier.
-const MAX_FILE_BYTES = 500 * 1024; // 500 Ko
-const ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png'];
-const ALLOWED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png'];
-
 module.exports = {
   NIVEAUX,
   DOCUMENTS_BY_LEVEL,
   OPTIONAL_EXTRA,
   MAX_FILE_BYTES,
+  PHOTO_MAX_BYTES,
   ALLOWED_MIME,
   ALLOWED_EXTENSIONS,
+  EXT_MIME,
+  mimesForFormats,
 };
