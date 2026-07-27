@@ -2,6 +2,7 @@
 
 const path = require('path');
 const express = require('express');
+const nodemailer = require('nodemailer');
 const { client: db, init: initDb } = require('./db/database');
 
 const app = express();
@@ -10,6 +11,55 @@ const PORT = process.env.PORT || 3000;
 // Identifiants de la page d'administration (à personnaliser via variables d'environnement).
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'tibiane2026';
+
+// --- Notification email (facultatif) -------------------------------------
+// Activée si SMTP_USER et SMTP_PASS sont définis (ex. Gmail + mot de passe
+// d'application). Un email est envoyé à NOTIFY_EMAIL à chaque préinscription.
+const SMTP_USER = process.env.SMTP_USER || '';
+const SMTP_PASS = process.env.SMTP_PASS || '';
+const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL || SMTP_USER;
+const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
+const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
+
+let mailer = null;
+if (SMTP_USER && SMTP_PASS) {
+  mailer = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_PORT === 465,
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
+  });
+}
+
+// Envoi non bloquant : une préinscription réussit même si l'email échoue.
+function notifyNewPreinscription(data) {
+  if (!mailer || !NOTIFY_EMAIL) return;
+  const lignes = [
+    `Nom : ${data.nom}`,
+    `Prénom : ${data.prenom}`,
+    `Date de naissance : ${data.date_naissance}`,
+    `Lieu de naissance : ${data.lieu_naissance}`,
+    `Niveau d'étude : ${data.niveau_etude || '—'}`,
+    `Dernier diplôme : ${data.dernier_diplome || '—'}`,
+    `Formation souhaitée : ${data.formation}`,
+    `WhatsApp : ${data.whatsapp}`,
+    `Email : ${data.email || '—'}`,
+    `Adresse : ${data.adresse || '—'}`,
+    `Message : ${data.message || '—'}`,
+  ];
+  mailer
+    .sendMail({
+      from: `"TIBIANE SERVICE" <${SMTP_USER}>`,
+      to: NOTIFY_EMAIL,
+      replyTo: data.email || undefined,
+      subject: `Nouvelle préinscription : ${data.prenom} ${data.nom} — ${data.formation}`,
+      text:
+        'Une nouvelle préinscription vient d\'être enregistrée :\n\n' +
+        lignes.join('\n') +
+        '\n\nConsultez toutes les préinscriptions sur votre page /admin.',
+    })
+    .catch((err) => console.error('Échec de l\'envoi de la notification email:', err.message));
+}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -93,6 +143,7 @@ app.post('/api/preinscriptions', async (req, res) => {
         data.email, data.adresse, data.message, data.consentement,
       ],
     });
+    notifyNewPreinscription(data);
     return res.status(201).json({ ok: true, id: Number(info.lastInsertRowid) });
   } catch (err) {
     console.error('Erreur enregistrement préinscription:', err);
@@ -135,6 +186,25 @@ app.get('/api/preinscriptions/export', requireAuth, async (req, res) => {
   res.set('Content-Type', 'text/csv; charset=utf-8');
   res.set('Content-Disposition', 'attachment; filename="preinscriptions.csv"');
   res.send(csv);
+});
+
+// --- API : suppression d'une préinscription (protégée) -------------------
+
+app.delete('/api/preinscriptions/:id', requireAuth, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ ok: false, errors: ['Identifiant invalide.'] });
+  }
+  try {
+    const result = await db.execute({
+      sql: 'DELETE FROM preinscriptions WHERE id = ?',
+      args: [id],
+    });
+    return res.json({ ok: true, deleted: result.rowsAffected });
+  } catch (err) {
+    console.error('Erreur suppression préinscription:', err);
+    return res.status(500).json({ ok: false, errors: ["Une erreur interne s'est produite."] });
+  }
 });
 
 // --- Vérification d'état (utilisée par l'hébergeur) ----------------------
