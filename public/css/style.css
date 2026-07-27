@@ -327,7 +327,7 @@ legend .step {
 }
 .fees-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 14px;
 }
 @media (max-width: 600px) { .fees-grid { grid-template-columns: 1fr; } }
@@ -396,7 +396,8 @@ legend .step {
   font-family: inherit;
 }
 .doc-item input[type="file"]::file-selector-button:hover { background: var(--primary-dark); }
-.doc-status { display: block; margin-top: 6px; font-size: 0.8rem; }
+.doc-hint { display: block; margin-top: 5px; font-size: 0.76rem; color: var(--muted); font-weight: 500; }
+.doc-status { display: block; margin-top: 4px; font-size: 0.8rem; }
 .doc-status.ok { color: var(--success); font-weight: 600; }
 .doc-status.err { color: var(--error); font-weight: 600; }
 .docs-extra-title {

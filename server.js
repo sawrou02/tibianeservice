@@ -108,11 +108,24 @@ function requireAuth(req, res, next) {
 
 // --- API : pièces à fournir selon le niveau (public) ---------------------
 
+function resolveDoc(doc) {
+  return {
+    label: doc.label,
+    required: !!doc.required,
+    formats: doc.formats || docsConfig.ALLOWED_EXTENSIONS,
+    maxBytes: doc.maxBytes || docsConfig.MAX_FILE_BYTES,
+  };
+}
+
 app.get('/api/documents-requirements', (req, res) => {
+  const documentsByLevel = {};
+  for (const [niveau, list] of Object.entries(docsConfig.DOCUMENTS_BY_LEVEL)) {
+    documentsByLevel[niveau] = list.map(resolveDoc);
+  }
   res.json({
     ok: true,
     niveaux: docsConfig.NIVEAUX,
-    documentsByLevel: docsConfig.DOCUMENTS_BY_LEVEL,
+    documentsByLevel,
     optionalExtra: docsConfig.OPTIONAL_EXTRA,
     maxFileBytes: docsConfig.MAX_FILE_BYTES,
     allowedExtensions: docsConfig.ALLOWED_EXTENSIONS,
@@ -166,13 +179,16 @@ app.post('/api/preinscriptions', upload.any(), async (req, res) => {
 
   // Construction de la liste des documents à enregistrer (+ validations).
   const toStore = [];
-  const validateFile = (f, libelle) => {
-    if (!docsConfig.ALLOWED_MIME.includes(f.mimetype)) {
-      errors.push(`Le document « ${libelle} » doit être au format PDF, JPG ou PNG.`);
+  const validateFile = (f, doc) => {
+    const formats = doc.formats || docsConfig.ALLOWED_EXTENSIONS;
+    const maxBytes = doc.maxBytes || docsConfig.MAX_FILE_BYTES;
+    const mimes = docsConfig.mimesForFormats(formats);
+    if (!mimes.includes(f.mimetype)) {
+      errors.push(`Le document « ${doc.label} » doit être au format ${formats.map((x) => x.toUpperCase()).join(', ')}.`);
       return false;
     }
-    if (f.size > docsConfig.MAX_FILE_BYTES) {
-      errors.push(`Le document « ${libelle} » dépasse 500 Ko.`);
+    if (f.size > maxBytes) {
+      errors.push(`Le document « ${doc.label} » dépasse ${Math.round(maxBytes / 1024)} Ko.`);
       return false;
     }
     return true;
@@ -185,14 +201,14 @@ app.post('/api/preinscriptions', upload.any(), async (req, res) => {
         if (doc.required) errors.push(`Le document « ${doc.label} » est obligatoire.`);
         return;
       }
-      if (validateFile(f, doc.label)) {
+      if (validateFile(f, doc)) {
         toStore.push({ libelle: doc.label, file: f });
       }
     });
     // Documents supplémentaires facultatifs.
     for (let i = 0; i < docsConfig.OPTIONAL_EXTRA; i += 1) {
       const f = fileByField[`extra_${i}`];
-      if (f && validateFile(f, 'Document supplémentaire')) {
+      if (f && validateFile(f, { label: 'Document supplémentaire' })) {
         toStore.push({ libelle: 'Document supplémentaire', file: f });
       }
     }
