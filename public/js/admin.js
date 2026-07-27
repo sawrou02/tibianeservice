@@ -83,25 +83,79 @@ function render(rows) {
   }
   empty.hidden = true;
 
-  tbody.innerHTML = rows.map((r) => `
+  tbody.innerHTML = rows.map((r) => {
+    const n = Number(r.nb_documents || 0);
+    const docsCell = n > 0
+      ? `<button type="button" class="docs-btn" data-docs="${esc(r.id)}" data-name="${esc(r.prenom + ' ' + r.nom)}">📎 Voir (${n})</button>`
+      : '<button type="button" class="docs-btn none" disabled>Aucun</button>';
+    const niveauCell = r.niveau_sollicite
+      ? `<span class="niveau-tag">${esc(r.niveau_sollicite)}</span>`
+      : '';
+    return `
     <tr>
       <td>${esc(r.id)}</td>
       <td>${esc(r.nom)}</td>
       <td>${esc(r.prenom)}</td>
       <td>${esc(r.date_naissance)}</td>
       <td>${esc(r.lieu_naissance)}</td>
+      <td>${esc(r.piece_identite)}</td>
       <td>${esc(r.niveau_etude)}</td>
       <td>${esc(r.dernier_diplome)}</td>
+      <td class="wrap">${esc(r.ecole_bac)}</td>
+      <td>${niveauCell}</td>
       <td class="wrap">${esc(r.formation)}</td>
       <td>${whatsappLink(r.whatsapp)}</td>
       <td>${esc(r.email)}</td>
       <td class="wrap">${esc(r.adresse)}</td>
       <td class="wrap">${esc(r.message)}</td>
+      <td>${docsCell}</td>
       <td>${formatDate(r.date_soumission)}</td>
       <td><button type="button" class="del-btn" data-id="${esc(r.id)}">Supprimer</button></td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 }
+
+// --- Fenêtre des documents ------------------------------------------------
+
+const modal = document.getElementById('docs-modal');
+const modalBody = document.getElementById('modal-body');
+const modalTitle = document.getElementById('modal-title');
+
+function closeModal() {
+  modal.classList.remove('open');
+  modalBody.innerHTML = '';
+}
+
+async function openDocs(id, name) {
+  modalTitle.textContent = 'Documents — ' + name;
+  modalBody.innerHTML = '<p class="modal-empty">Chargement…</p>';
+  modal.classList.add('open');
+  try {
+    const res = await fetch('/api/preinscriptions/' + encodeURIComponent(id) + '/documents');
+    if (!res.ok) throw new Error('Erreur');
+    const json = await res.json();
+    const docs = json.data || [];
+    if (docs.length === 0) {
+      modalBody.innerHTML = '<p class="modal-empty">Aucun document pour ce candidat.</p>';
+      return;
+    }
+    modalBody.innerHTML = docs.map((d) => `
+      <div class="doc-row">
+        <div>
+          <div class="d-label">${esc(d.libelle)}</div>
+          <div class="d-meta">${esc(d.nom_fichier)} — ${Math.round(Number(d.taille) / 1024)} Ko</div>
+        </div>
+        <a href="/api/documents/${esc(d.id)}" target="_blank" rel="noopener">Ouvrir</a>
+      </div>
+    `).join('');
+  } catch (err) {
+    modalBody.innerHTML = '<p class="modal-empty">Erreur lors du chargement des documents.</p>';
+  }
+}
+
+document.getElementById('modal-close').addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
 function applyFilter() {
   const q = document.getElementById('search').value.trim().toLowerCase();
@@ -123,7 +177,8 @@ function applyFilter() {
 
   if (q) {
     filtered = filtered.filter((r) =>
-      [r.nom, r.prenom, r.formation, r.whatsapp, r.email, r.lieu_naissance]
+      [r.nom, r.prenom, r.formation, r.whatsapp, r.email, r.lieu_naissance,
+       r.niveau_sollicite, r.piece_identite, r.ecole_bac]
         .some((v) => (v || '').toLowerCase().includes(q))
     );
   }
@@ -170,8 +225,10 @@ document.getElementById('reset-filters').addEventListener('click', () => {
   applyFilter();
 });
 document.getElementById('rows').addEventListener('click', (e) => {
-  const btn = e.target.closest('.del-btn');
-  if (btn) del(btn.getAttribute('data-id'));
+  const delBtn = e.target.closest('.del-btn');
+  if (delBtn) { del(delBtn.getAttribute('data-id')); return; }
+  const docsBtn = e.target.closest('.docs-btn[data-docs]');
+  if (docsBtn) openDocs(docsBtn.getAttribute('data-docs'), docsBtn.getAttribute('data-name'));
 });
 
 load();

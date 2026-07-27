@@ -32,7 +32,7 @@ if (!url) {
 
 const client = createClient({ url, authToken });
 
-// Création de la table si elle n'existe pas encore.
+// Création / mise à jour du schéma.
 async function init() {
   await client.execute(`
     CREATE TABLE IF NOT EXISTS preinscriptions (
@@ -41,8 +41,11 @@ async function init() {
       prenom            TEXT NOT NULL,
       date_naissance    TEXT NOT NULL,
       lieu_naissance    TEXT NOT NULL,
+      piece_identite    TEXT,
       niveau_etude      TEXT,
       dernier_diplome   TEXT,
+      ecole_bac         TEXT,
+      niveau_sollicite  TEXT,
       formation         TEXT NOT NULL,
       whatsapp          TEXT NOT NULL,
       email             TEXT,
@@ -52,6 +55,37 @@ async function init() {
       date_soumission   TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+
+  // Migration additive : ajoute les colonnes manquantes sur une base existante.
+  const info = await client.execute('PRAGMA table_info(preinscriptions);');
+  const existing = new Set(info.rows.map((r) => r.name));
+  const toAdd = [
+    ['piece_identite', 'TEXT'],
+    ['ecole_bac', 'TEXT'],
+    ['niveau_sollicite', 'TEXT'],
+  ];
+  for (const [col, type] of toAdd) {
+    if (!existing.has(col)) {
+      await client.execute(`ALTER TABLE preinscriptions ADD COLUMN ${col} ${type};`);
+    }
+  }
+
+  // Table des documents déposés (fichiers stockés directement dans la base).
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS documents (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      preinscription_id INTEGER NOT NULL,
+      libelle           TEXT NOT NULL,
+      nom_fichier       TEXT NOT NULL,
+      type_mime         TEXT NOT NULL,
+      taille            INTEGER NOT NULL,
+      contenu           BLOB NOT NULL,
+      date_ajout        TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+  await client.execute(
+    'CREATE INDEX IF NOT EXISTS idx_documents_preinscription ON documents(preinscription_id);'
+  );
 }
 
 module.exports = { client, init };

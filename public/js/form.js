@@ -7,6 +7,14 @@ const errorsBox = document.getElementById('form-errors');
 const successBox = document.getElementById('success-message');
 const submitBtn = form.querySelector('.btn-submit');
 
+const niveauSelect = document.getElementById('niveau_sollicite');
+const docsFieldset = document.getElementById('documents-fieldset');
+const docsContainer = document.getElementById('documents-container');
+
+let requirements = null;
+const ALLOWED_EXT = ['pdf', 'jpg', 'jpeg', 'png'];
+const MAX_BYTES = 500 * 1024;
+
 function showErrors(messages) {
   errorsBox.innerHTML =
     '<strong>Veuillez corriger les points suivants :</strong>' +
@@ -15,24 +23,123 @@ function showErrors(messages) {
   errorsBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
+function fileExt(name) {
+  const m = /\.([^.]+)$/.exec(name || '');
+  return m ? m[1].toLowerCase() : '';
+}
+
+// Vérifie un fichier choisi et met à jour l'affichage de la ligne.
+function checkFile(input) {
+  const item = input.closest('.doc-item');
+  const status = item.querySelector('.doc-status');
+  const file = input.files && input.files[0];
+
+  item.classList.remove('filled', 'invalid');
+  status.className = 'doc-status';
+  status.textContent = '';
+
+  if (!file) return;
+
+  if (!ALLOWED_EXT.includes(fileExt(file.name))) {
+    item.classList.add('invalid');
+    status.classList.add('err');
+    status.textContent = 'Format non accepté (PDF, JPG ou PNG uniquement).';
+    input.value = '';
+    return;
+  }
+  if (file.size > MAX_BYTES) {
+    item.classList.add('invalid');
+    status.classList.add('err');
+    status.textContent = `Fichier trop lourd (${Math.round(file.size / 1024)} Ko). Maximum 500 Ko.`;
+    input.value = '';
+    return;
+  }
+  item.classList.add('filled');
+  status.classList.add('ok');
+  status.textContent = `✓ ${file.name} (${Math.round(file.size / 1024)} Ko)`;
+}
+
+function docItem(fieldName, label, required) {
+  const wrap = document.createElement('div');
+  wrap.className = 'doc-item';
+  const reqTag = required
+    ? '<span class="doc-req">Obligatoire</span>'
+    : '<span class="doc-opt">Facultatif</span>';
+  wrap.innerHTML = `
+    <div class="doc-head">
+      <span class="doc-label">${label}</span>
+      ${reqTag}
+    </div>
+    <input type="file" name="${fieldName}" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"${required ? ' data-required="1"' : ''}>
+    <span class="doc-status"></span>
+  `;
+  wrap.querySelector('input').addEventListener('change', (e) => checkFile(e.target));
+  return wrap;
+}
+
+function renderDocuments(niveau) {
+  docsContainer.innerHTML = '';
+  const list = requirements && requirements.documentsByLevel[niveau];
+  if (!list) {
+    docsFieldset.hidden = true;
+    return;
+  }
+  list.forEach((doc, i) => {
+    docsContainer.appendChild(docItem(`doc_${i}`, doc.label, doc.required));
+  });
+
+  const extra = (requirements && requirements.optionalExtra) || 0;
+  if (extra > 0) {
+    const title = document.createElement('div');
+    title.className = 'docs-extra-title';
+    title.textContent = 'Documents supplémentaires (facultatif)';
+    docsContainer.appendChild(title);
+    const hint = document.createElement('p');
+    hint.className = 'docs-intro';
+    hint.textContent = 'Ex : attestation de stage, certificat de travail, test d\'anglais, score IAE…';
+    docsContainer.appendChild(hint);
+    for (let i = 0; i < extra; i += 1) {
+      docsContainer.appendChild(docItem(`extra_${i}`, `Document supplémentaire ${i + 1}`, false));
+    }
+  }
+  docsFieldset.hidden = false;
+}
+
+// Chargement de la configuration des pièces à fournir.
+fetch('/api/documents-requirements')
+  .then((r) => r.json())
+  .then((json) => {
+    requirements = json;
+    niveauSelect.innerHTML = '<option value="">— Sélectionnez —</option>' +
+      json.niveaux.map((n) => `<option value="${n}">${n}</option>`).join('');
+  })
+  .catch(() => {
+    niveauSelect.innerHTML = '<option value="">(indisponible, réessayez)</option>';
+  });
+
+niveauSelect.addEventListener('change', () => renderDocuments(niveauSelect.value));
+
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   errorsBox.hidden = true;
 
-  const payload = {
-    nom: form.nom.value,
-    prenom: form.prenom.value,
-    date_naissance: form.date_naissance.value,
-    lieu_naissance: form.lieu_naissance.value,
-    niveau_etude: form.niveau_etude.value,
-    dernier_diplome: form.dernier_diplome.value,
-    formation: form.formation.value,
-    whatsapp: form.whatsapp.value,
-    email: form.email.value,
-    adresse: form.adresse.value,
-    message: form.message.value,
-    consentement: form.consentement.checked,
-  };
+  // Vérification des documents obligatoires côté client.
+  const missing = [];
+  docsContainer.querySelectorAll('input[type="file"][data-required="1"]').forEach((input) => {
+    if (!input.files || input.files.length === 0) {
+      const label = input.closest('.doc-item').querySelector('.doc-label').textContent;
+      missing.push(`Le document « ${label} » est obligatoire.`);
+    }
+  });
+  if (!niveauSelect.value) {
+    missing.unshift('Veuillez choisir le niveau sollicité.');
+  }
+  if (missing.length > 0) {
+    showErrors(missing);
+    return;
+  }
+
+  const formData = new FormData(form);
 
   submitBtn.disabled = true;
   submitBtn.textContent = 'Envoi en cours…';
@@ -40,8 +147,7 @@ form.addEventListener('submit', async (event) => {
   try {
     const response = await fetch('/api/preinscriptions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: formData,
     });
     const result = await response.json();
 
@@ -62,6 +168,8 @@ form.addEventListener('submit', async (event) => {
 
 document.getElementById('new-form').addEventListener('click', () => {
   form.reset();
+  docsContainer.innerHTML = '';
+  docsFieldset.hidden = true;
   form.hidden = false;
   successBox.hidden = true;
   window.scrollTo({ top: 0, behavior: 'smooth' });
