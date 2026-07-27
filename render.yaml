@@ -19,6 +19,8 @@ services:
         sync: false          # adresse de la base Turso (à saisir à la mise en ligne)
       - key: TURSO_AUTH_TOKEN
         sync: false          # jeton d'accès de la base Turso (à saisir à la mise en ligne)
+      - key: DOCUMENTS_ENABLED
+        value: "false"       # "false" = masque le dépôt de documents ; "true" = l'affiche
       - key: ADMIN_USER
         value: admin         # identifiant de la page d'administration (modifiable)
       - key: ADMIN_PASSWORD
