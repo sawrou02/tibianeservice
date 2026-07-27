@@ -126,6 +126,7 @@ app.get('/api/documents-requirements', (req, res) => {
     ok: true,
     niveaux: docsConfig.NIVEAUX,
     documentsByLevel,
+    notesByLevel: docsConfig.NOTES_BY_LEVEL,
     optionalExtra: docsConfig.OPTIONAL_EXTRA,
     maxFileBytes: docsConfig.MAX_FILE_BYTES,
     allowedExtensions: docsConfig.ALLOWED_EXTENSIONS,
