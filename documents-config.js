@@ -76,12 +76,23 @@ const DOCUMENTS_BY_LEVEL = {
   ],
 };
 
+// Message d'information affiché pour certains niveaux.
+// Pour le L1, un candidat encore en terminale n'a pas encore le BAC : il dépose
+// son certificat de scolarité et complète son dossier après l'obtention du BAC.
+const NOTES_BY_LEVEL = {
+  'Licence 1':
+    "Vous êtes en classe de terminale (BAC en cours) ? Déposez votre certificat de scolarité " +
+    "à la place des bulletins de terminale. Vous compléterez votre dossier avec le relevé de " +
+    "notes et l'attestation de réussite du BAC dès son obtention.",
+};
+
 // Nombre de champs « document supplémentaire (facultatif) » proposés au candidat.
 const OPTIONAL_EXTRA = 3;
 
 module.exports = {
   NIVEAUX,
   DOCUMENTS_BY_LEVEL,
+  NOTES_BY_LEVEL,
   OPTIONAL_EXTRA,
   MAX_FILE_BYTES,
   PHOTO_MAX_BYTES,

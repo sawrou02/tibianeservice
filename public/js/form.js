@@ -95,6 +95,15 @@ function renderDocuments(niveau) {
     docsFieldset.hidden = true;
     return;
   }
+
+  const note = requirements.notesByLevel && requirements.notesByLevel[niveau];
+  if (note) {
+    const noteBox = document.createElement('p');
+    noteBox.className = 'level-note';
+    noteBox.textContent = 'ℹ️ ' + note;
+    docsContainer.appendChild(noteBox);
+  }
+
   list.forEach((doc, i) => {
     docsContainer.appendChild(docItem(`doc_${i}`, doc));
   });

@@ -366,6 +366,15 @@ legend .step {
   border-radius: var(--radius-sm);
   padding: 11px 14px;
 }
+.level-note {
+  margin: 0 0 14px;
+  font-size: 0.88rem;
+  color: #8a5a00;
+  background: #fdf6e8;
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+}
 .doc-item {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
