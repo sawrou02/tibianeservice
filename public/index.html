@@ -33,8 +33,34 @@
   <main class="container">
     <section class="intro">
       <h2>Faites votre préinscription en ligne</h2>
-      <p>Remplissez le formulaire ci-dessous pour vous préinscrire à l'une de nos formations.
-         Les champs marqués d'un astérisque (<span class="req">*</span>) sont obligatoires.</p>
+      <p>Remplissez le formulaire ci-dessous et déposez vos pièces pour préparer votre dossier
+         de préinscription (Campus France). Les champs marqués d'un astérisque
+         (<span class="req">*</span>) sont obligatoires.</p>
+    </section>
+
+    <section class="fees" aria-label="Frais et modalités">
+      <h3>Frais &amp; modalités</h3>
+      <div class="fees-grid">
+        <div class="fee-card">
+          <span class="fee-amount">100 000 FCFA</span>
+          <span class="fee-label">Frais de dossier &amp; soumission (cabinet)</span>
+          <ul class="fee-detail">
+            <li>1ʳᵉ tranche : <strong>avant l'ouverture du dossier</strong></li>
+            <li>2ᵉ tranche : <strong>avant l'entretien Campus France</strong></li>
+          </ul>
+        </div>
+        <div class="fee-card">
+          <span class="fee-amount">85 000 FCFA</span>
+          <span class="fee-label">Frais de dossier Campus France</span>
+          <ul class="fee-detail">
+            <li>À régler <strong>après la soumission</strong> du dossier</li>
+          </ul>
+        </div>
+      </div>
+      <p class="fees-note">
+        ⚠️ Il est important de régler tôt les frais pour un traitement rapide et efficace
+        de votre dossier. Le cabinet ne commence pas un dossier avant le paiement des frais d'ouverture.
+      </p>
     </section>
 
     <form id="preinscription-form" novalidate>
@@ -57,6 +83,10 @@
           <div class="field">
             <label for="lieu_naissance">Lieu de naissance <span class="req">*</span></label>
             <input type="text" id="lieu_naissance" name="lieu_naissance" required>
+          </div>
+          <div class="field field-full">
+            <label for="piece_identite">Numéro de pièce d'identité <span class="req">*</span></label>
+            <input type="text" id="piece_identite" name="piece_identite" placeholder="N° CNI, passeport ou récépissé" required>
           </div>
         </div>
       </fieldset>
@@ -84,9 +114,19 @@
             <input type="text" id="dernier_diplome" name="dernier_diplome" placeholder="Ex : Baccalauréat, Licence…">
           </div>
           <div class="field field-full">
-            <label for="formation">Formation souhaitée <span class="req">*</span></label>
-            <input type="text" id="formation" name="formation" placeholder="Écrivez ici la formation que vous souhaitez suivre…" required>
-            <small class="hint">Indiquez librement la formation de votre choix.</small>
+            <label for="ecole_bac">École / établissement d'obtention du baccalauréat</label>
+            <input type="text" id="ecole_bac" name="ecole_bac" placeholder="Nom de l'établissement où vous avez obtenu le BAC">
+          </div>
+          <div class="field">
+            <label for="niveau_sollicite">Niveau sollicité (Campus France) <span class="req">*</span></label>
+            <select id="niveau_sollicite" name="niveau_sollicite" required>
+              <option value="">— Sélectionnez —</option>
+            </select>
+            <small class="hint">Le choix du niveau détermine les pièces à fournir ci-dessous.</small>
+          </div>
+          <div class="field">
+            <label for="formation">Formation / filière souhaitée <span class="req">*</span></label>
+            <input type="text" id="formation" name="formation" placeholder="Ex : Informatique, Gestion, Droit…" required>
           </div>
         </div>
       </fieldset>
@@ -112,6 +152,16 @@
             <textarea id="message" name="message" rows="3"></textarea>
           </div>
         </div>
+      </fieldset>
+
+      <fieldset id="documents-fieldset" hidden>
+        <legend><span class="step">4</span> Pièces à fournir</legend>
+        <p class="docs-intro">
+          Choisissez d'abord votre <strong>niveau sollicité</strong> ci-dessus, puis déposez
+          chaque document demandé (un fichier par pièce). Formats acceptés :
+          <strong>PDF, JPG ou PNG</strong>, lisibles et <strong>≤ 500 Ko</strong> par fichier.
+        </p>
+        <div id="documents-container"></div>
       </fieldset>
 
       <div class="field field-full consent">

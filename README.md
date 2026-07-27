@@ -7,15 +7,32 @@ consultables depuis une page d'administration protégée par mot de passe.
 ## Fonctionnalités
 
 - 📝 Formulaire de préinscription en français (responsive, mobile & ordinateur).
-- 🗄️ Enregistrement des demandes dans une base de données locale (SQLite).
-- 🔐 Page d'administration protégée pour consulter les préinscriptions.
-- 🔎 Recherche instantanée dans la liste des préinscriptions.
+- 🎓 **Dépôt de dossier** : selon le niveau sollicité (Licence 1/2/3, Master 1/2),
+  le candidat voit les pièces à fournir et les dépose une par une.
+- 📎 Fichiers acceptés : **PDF, JPG, PNG**, **≤ 500 Ko** chacun (vérifié
+  automatiquement, côté candidat et côté serveur).
+- 💰 Affichage des **frais & modalités** de paiement.
+- 🗄️ Enregistrement des demandes **et des documents** dans la base de données.
+- 🔐 Page d'administration protégée : consulter les dossiers, **voir/télécharger
+  les pièces**, statistiques, filtre par dates, suppression.
 - ⬇️ Export des données au format CSV (compatible Excel).
 
 ## Informations collectées
 
-Nom, prénom, date et lieu de naissance, niveau d'étude, dernier diplôme,
-formation souhaitée, numéro WhatsApp, email, adresse, message, et consentement RGPD.
+Nom, prénom, date et lieu de naissance, **numéro de pièce d'identité**, niveau
+d'étude, dernier diplôme, **école d'obtention du baccalauréat**, **niveau
+sollicité**, formation souhaitée, numéro WhatsApp, email, adresse, message,
+**pièces jointes du dossier**, et consentement RGPD.
+
+## Pièces à fournir & frais
+
+- Les listes de pièces par niveau proviennent des Termes de Référence et sont
+  définies dans **`documents-config.js`** (source unique modifiable facilement).
+  La lettre de motivation n'est **pas** demandée au candidat (rédigée par le cabinet).
+- Frais affichés sur le formulaire :
+  - **100 000 FCFA** — frais de dossier & soumission (cabinet), en 2 tranches
+    (1ʳᵉ avant l'ouverture du dossier, 2ᵉ avant l'entretien Campus France) ;
+  - **85 000 FCFA** — frais de dossier Campus France, après la soumission.
 
 ## Installation
 
@@ -130,7 +147,8 @@ depuis la page d'administration grâce au bouton **Export CSV**.
 
 ```
 tibianeservice/
-├── server.js            # Serveur Express + API
+├── server.js            # Serveur Express + API (préinscriptions + documents)
+├── documents-config.js  # Pièces à fournir par niveau (source unique)
 ├── render.yaml          # Configuration de mise en ligne (Render)
 ├── db/database.js       # Connexion et schéma de la base SQLite
 ├── public/
