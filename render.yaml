@@ -23,3 +23,11 @@ services:
         value: admin         # identifiant de la page d'administration (modifiable)
       - key: ADMIN_PASSWORD
         sync: false          # mot de passe admin : à saisir lors de la mise en ligne
+      # Notifications email (facultatif) — voir README « Recevoir un email ».
+      # Laissez vide pour désactiver l'envoi d'emails.
+      - key: SMTP_USER
+        sync: false          # votre adresse Gmail (ex. sawrou02@gmail.com)
+      - key: SMTP_PASS
+        sync: false          # mot de passe d'application Gmail (16 caractères)
+      - key: NOTIFY_EMAIL
+        sync: false          # adresse qui reçoit les notifications (par défaut : SMTP_USER)

@@ -87,6 +87,35 @@ Gardez ces deux valeurs de côté pour l'étape suivante.
 > visite suivante — sans aucune perte de données, puisque celles-ci sont
 > stockées dans Turso.
 
+## Recevoir un email à chaque préinscription (facultatif)
+
+Vous pouvez être prévenu(e) par email dès qu'un candidat s'inscrit. C'est
+gratuit avec un compte Gmail :
+
+1. Activez la **validation en deux étapes** sur votre compte Google
+   (https://myaccount.google.com/security).
+2. Créez un **mot de passe d'application** :
+   https://myaccount.google.com/apppasswords → choisissez « Autre », nommez-le
+   `TIBIANE`, puis copiez le code de 16 caractères affiché.
+3. Sur Render, dans les variables de votre service, renseignez :
+   - `SMTP_USER` → votre adresse Gmail (ex. `sawrou02@gmail.com`)
+   - `SMTP_PASS` → le mot de passe d'application de 16 caractères (sans espaces)
+   - `NOTIFY_EMAIL` → l'adresse qui reçoit les alertes (par défaut, `SMTP_USER`)
+
+À chaque nouvelle préinscription, un email récapitulatif vous est envoyé. Si
+ces variables restent vides, l'envoi d'email est simplement désactivé (le reste
+du site fonctionne normalement).
+
+## Fonctionnalités de l'espace d'administration
+
+- **Statistiques** : total, préinscriptions du jour, des 7 derniers jours, et
+  nombre de formations différentes.
+- **Répartition par formation** : combien de candidats par formation.
+- **Recherche** instantanée et **filtre par dates**.
+- **Suppression** d'une préinscription (avec confirmation).
+- **Lien WhatsApp cliquable** pour contacter directement un candidat.
+- **Export CSV** compatible Excel.
+
 ## Où sont stockées les données ?
 
 - **En ligne** : dans votre base de données **Turso**, conservées en
