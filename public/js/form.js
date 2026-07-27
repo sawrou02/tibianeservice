@@ -12,8 +12,10 @@ const docsFieldset = document.getElementById('documents-fieldset');
 const docsContainer = document.getElementById('documents-container');
 
 let requirements = null;
+let documentsEnabled = true;
 const DEFAULT_FORMATS = ['pdf', 'jpg', 'jpeg', 'png'];
 const DEFAULT_MAX_BYTES = 500 * 1024;
+const niveauHint = niveauSelect.parentElement.querySelector('.hint');
 
 function showErrors(messages) {
   errorsBox.innerHTML =
@@ -130,14 +132,24 @@ fetch('/api/documents-requirements')
   .then((r) => r.json())
   .then((json) => {
     requirements = json;
+    documentsEnabled = json.documentsEnabled !== false;
     niveauSelect.innerHTML = '<option value="">— Sélectionnez —</option>' +
       json.niveaux.map((n) => `<option value="${n}">${n}</option>`).join('');
+    if (!documentsEnabled) {
+      // Dépôt de documents masqué : on garde le niveau, sans la partie fichiers.
+      docsFieldset.hidden = true;
+      if (niveauHint) {
+        niveauHint.textContent = 'Niveau visé pour votre candidature Campus France.';
+      }
+    }
   })
   .catch(() => {
     niveauSelect.innerHTML = '<option value="">(indisponible, réessayez)</option>';
   });
 
-niveauSelect.addEventListener('change', () => renderDocuments(niveauSelect.value));
+niveauSelect.addEventListener('change', () => {
+  if (documentsEnabled) renderDocuments(niveauSelect.value);
+});
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();

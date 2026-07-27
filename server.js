@@ -20,6 +20,11 @@ const upload = multer({
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'tibiane2026';
 
+// Affichage du dépôt de documents sur le formulaire.
+// Actuellement MASQUÉ par défaut (le téléversement bloquait certains candidats).
+// Pour réafficher la partie « Pièces à fournir », mettre DOCUMENTS_ENABLED=true.
+const DOCUMENTS_ENABLED = String(process.env.DOCUMENTS_ENABLED || 'false').toLowerCase() === 'true';
+
 // --- Notification email (facultatif) -------------------------------------
 // Activée si SMTP_USER et SMTP_PASS sont définis (ex. Gmail + mot de passe
 // d'application). Un email est envoyé à NOTIFY_EMAIL à chaque préinscription.
@@ -124,6 +129,7 @@ app.get('/api/documents-requirements', (req, res) => {
   }
   res.json({
     ok: true,
+    documentsEnabled: DOCUMENTS_ENABLED,
     niveaux: docsConfig.NIVEAUX,
     documentsByLevel,
     notesByLevel: docsConfig.NOTES_BY_LEVEL,
@@ -195,7 +201,7 @@ app.post('/api/preinscriptions', upload.any(), async (req, res) => {
     return true;
   };
 
-  if (errors.length === 0 || data.niveau_sollicite) {
+  if (DOCUMENTS_ENABLED && (errors.length === 0 || data.niveau_sollicite)) {
     expected.forEach((doc, i) => {
       const f = fileByField[`doc_${i}`];
       if (!f) {
