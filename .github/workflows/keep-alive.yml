@@ -1,0 +1,19 @@
+name: Réveil automatique du site
+
+# Empêche le site (hébergé sur le plan gratuit de Render) de se mettre en
+# veille : on le visite régulièrement pour qu'il réponde tout de suite aux
+# clients. Se lance automatiquement selon la planification ci-dessous, et peut
+# aussi être déclenché à la main depuis l'onglet « Actions ».
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # toutes les 10 minutes
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Visiter le site pour le garder éveillé
+        run: |
+          curl -sS -m 90 -o /dev/null -w "Réveil : HTTP %{http_code} en %{time_total}s\n" \
+            https://tibiane-preinscription.onrender.com/healthz || true
