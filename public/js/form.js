@@ -184,6 +184,13 @@ form.addEventListener('submit', async (event) => {
     const result = await response.json();
 
     if (response.ok && result.ok) {
+      const joinBtn = document.getElementById('join-group');
+      if (joinBtn && result.groupUrl) {
+        joinBtn.href = result.groupUrl;
+        joinBtn.hidden = false;
+      } else if (joinBtn) {
+        joinBtn.hidden = true;
+      }
       form.hidden = true;
       successBox.hidden = false;
       successBox.scrollIntoView({ behavior: 'smooth', block: 'center' });

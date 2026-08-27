@@ -304,6 +304,27 @@ legend .step {
   font-family: var(--font-head);
 }
 .success p { color: var(--muted); margin: 0 0 22px; }
+.success .check { font-size: 2rem; }
+.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #25D366;
+  color: #fff;
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 15px 28px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 16px rgba(37, 211, 102, 0.32);
+  transition: background 0.15s, transform 0.06s;
+}
+.btn-whatsapp:hover { background: #1da851; }
+.btn-whatsapp:active { transform: translateY(1px); }
+.btn-whatsapp svg { width: 24px; height: 24px; }
+.success-note { color: var(--muted); font-size: 0.95rem; margin: 18px 0 22px !important; }
 
 @media (prefers-reduced-motion: reduce) {
   .success { animation: none; }
