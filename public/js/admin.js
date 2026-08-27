@@ -1,6 +1,7 @@
 'use strict';
 
 let allRows = [];
+let groupInvite = null; // { url, message } — invitation au groupe WhatsApp
 
 function esc(v) {
   if (v === null || v === undefined) return '';
@@ -91,6 +92,10 @@ function render(rows) {
     const niveauCell = r.niveau_sollicite
       ? `<span class="niveau-tag">${esc(r.niveau_sollicite)}</span>`
       : '';
+    const wa = String(r.whatsapp || '').replace(/[^\d]/g, '');
+    const inviteBtn = wa
+      ? `<button type="button" class="invite-btn" data-wa="${wa}">📨 Groupe</button>`
+      : '';
     return `
     <tr>
       <td>${esc(r.id)}</td>
@@ -110,7 +115,7 @@ function render(rows) {
       <td class="wrap">${esc(r.message)}</td>
       <td>${docsCell}</td>
       <td>${formatDate(r.date_soumission)}</td>
-      <td><button type="button" class="del-btn" data-id="${esc(r.id)}">Supprimer</button></td>
+      <td class="actions-cell">${inviteBtn}<button type="button" class="del-btn" data-id="${esc(r.id)}">Supprimer</button></td>
     </tr>`;
   }).join('');
 }
@@ -201,6 +206,26 @@ async function del(id) {
   }
 }
 
+// Ouvre WhatsApp avec le message d'invitation + le lien du groupe pré-remplis.
+function inviteToGroup(wa) {
+  if (!groupInvite || !groupInvite.url) {
+    window.alert("Le lien du groupe n'est pas encore chargé. Réessayez dans un instant.");
+    return;
+  }
+  const text = encodeURIComponent(groupInvite.message + '\n' + groupInvite.url);
+  window.open('https://wa.me/' + wa + '?text=' + text, '_blank', 'noopener');
+}
+
+async function loadGroupInvite() {
+  try {
+    const res = await fetch('/api/group-invite');
+    if (res.ok) {
+      const json = await res.json();
+      groupInvite = { url: json.url || '', message: json.message || '' };
+    }
+  } catch (err) { /* silencieux : le bouton préviendra si indisponible */ }
+}
+
 async function load() {
   try {
     const res = await fetch('/api/preinscriptions');
@@ -227,8 +252,26 @@ document.getElementById('reset-filters').addEventListener('click', () => {
 document.getElementById('rows').addEventListener('click', (e) => {
   const delBtn = e.target.closest('.del-btn');
   if (delBtn) { del(delBtn.getAttribute('data-id')); return; }
+  const inviteBtn = e.target.closest('.invite-btn[data-wa]');
+  if (inviteBtn) { inviteToGroup(inviteBtn.getAttribute('data-wa')); return; }
   const docsBtn = e.target.closest('.docs-btn[data-docs]');
   if (docsBtn) openDocs(docsBtn.getAttribute('data-docs'), docsBtn.getAttribute('data-name'));
 });
 
+const copyInviteBtn = document.getElementById('copy-invite');
+if (copyInviteBtn) {
+  copyInviteBtn.addEventListener('click', async () => {
+    if (!groupInvite || !groupInvite.url) return;
+    const text = groupInvite.message + '\n' + groupInvite.url;
+    try {
+      await navigator.clipboard.writeText(text);
+      copyInviteBtn.textContent = '✓ Copié';
+      setTimeout(() => { copyInviteBtn.textContent = "📋 Copier l'invitation"; }, 1600);
+    } catch (err) {
+      window.prompt('Copiez le message d\'invitation :', text);
+    }
+  });
+}
+
+loadGroupInvite();
 load();
