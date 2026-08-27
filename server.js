@@ -270,7 +270,7 @@ app.post('/api/preinscriptions', upload.any(), async (req, res) => {
     }
 
     notifyNewPreinscription(data, toStore.length);
-    return res.status(201).json({ ok: true, id: preinscriptionId });
+    return res.status(201).json({ ok: true, id: preinscriptionId, groupUrl: GROUP_INVITE_URL });
   } catch (err) {
     console.error('Erreur enregistrement préinscription:', err);
     return res.status(500).json({ ok: false, errors: ["Une erreur interne s'est produite."] });
