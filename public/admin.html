@@ -60,6 +60,12 @@
       padding: 5px 10px; cursor: pointer; font-size: 0.82rem; font-weight: 600;
     }
     .del-btn:hover { background: #f8d5d1; }
+    .actions-cell { white-space: nowrap; }
+    .invite-btn {
+      background: #25D366; color: #fff; border: none; border-radius: 7px;
+      padding: 5px 10px; cursor: pointer; font-size: 0.82rem; font-weight: 600; margin-right: 6px;
+    }
+    .invite-btn:hover { background: #1da851; }
     .whatsapp-link { color: var(--success); text-decoration: none; font-weight: 600; }
     .whatsapp-link:hover { text-decoration: underline; }
     .docs-btn {
@@ -160,6 +166,7 @@
           <span class="date-field">Du <input type="date" id="date-from" class="date-input"></span>
           <span class="date-field">au <input type="date" id="date-to" class="date-input"></span>
           <button type="button" id="reset-filters" class="ghost-btn">Réinitialiser</button>
+          <button type="button" id="copy-invite" class="ghost-btn">📋 Copier l'invitation</button>
           <a href="/api/preinscriptions/export" class="link-btn">⬇ Exporter en CSV</a>
         </div>
       </div>

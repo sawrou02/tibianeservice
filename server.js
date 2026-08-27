@@ -25,6 +25,14 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'tibiane2026';
 // Pour réafficher la partie « Pièces à fournir », mettre DOCUMENTS_ENABLED=true.
 const DOCUMENTS_ENABLED = String(process.env.DOCUMENTS_ENABLED || 'false').toLowerCase() === 'true';
 
+// Invitation au groupe WhatsApp (utilisée par les boutons « Inviter au groupe »
+// de l'espace admin). Modifiable via variables d'environnement.
+const GROUP_INVITE_URL = process.env.GROUP_INVITE_URL || 'https://chat.whatsapp.com/FfODVvUBTBm8QRSLLwiSKX';
+const GROUP_INVITE_MESSAGE = process.env.GROUP_INVITE_MESSAGE ||
+  'Bonjour 👋 Merci pour votre préinscription chez TIBIANE CONSULTING ! ' +
+  'Rejoignez notre groupe officiel — Campagne 2026–2027 pour suivre toutes les ' +
+  'informations et l\'avancement de votre dossier :';
+
 // --- Notification email (facultatif) -------------------------------------
 // Activée si SMTP_USER et SMTP_PASS sont définis (ex. Gmail + mot de passe
 // d'application). Un email est envoyé à NOTIFY_EMAIL à chaque préinscription.
@@ -267,6 +275,12 @@ app.post('/api/preinscriptions', upload.any(), async (req, res) => {
     console.error('Erreur enregistrement préinscription:', err);
     return res.status(500).json({ ok: false, errors: ["Une erreur interne s'est produite."] });
   }
+});
+
+// --- API : invitation au groupe WhatsApp (protégée) ----------------------
+
+app.get('/api/group-invite', requireAuth, (req, res) => {
+  res.json({ ok: true, url: GROUP_INVITE_URL, message: GROUP_INVITE_MESSAGE });
 });
 
 // --- API : liste des préinscriptions (protégée) --------------------------
