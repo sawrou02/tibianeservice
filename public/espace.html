@@ -39,6 +39,20 @@
     .steps li .state { margin-left:auto; font-size:0.82rem; font-weight:700; color:var(--muted); }
     .steps li.done .state { color:var(--success); }
     .err { background:var(--error-bg); border:1px solid #f0b4ae; color:var(--error); border-radius:var(--radius-sm); padding:11px 14px; margin-bottom:14px; font-size:0.92rem; }
+
+    /* Chat */
+    .chat { margin-top:28px; border-top:1px solid var(--line,#e4ecec); padding-top:18px; }
+    .chat-title { font-family:var(--font-head); color:var(--primary-dark); font-size:1.1rem; margin:0 0 12px; }
+    .chat-box { background:#f4f8f8; border:1px solid var(--line,#e4ecec); border-radius:var(--radius-sm); padding:14px; height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+    .chat-empty { color:var(--muted); text-align:center; margin:auto; font-size:0.9rem; }
+    .bubble { max-width:80%; padding:9px 13px; border-radius:14px; font-size:0.93rem; line-height:1.4; word-wrap:break-word; }
+    .bubble .meta { display:block; font-size:0.7rem; opacity:0.7; margin-top:4px; }
+    .bubble.client { align-self:flex-end; background:var(--primary); color:#fff; border-bottom-right-radius:4px; }
+    .bubble.agence { align-self:flex-start; background:#fff; border:1px solid var(--border); color:var(--ink); border-bottom-left-radius:4px; }
+    .chat-form { display:flex; gap:8px; margin-top:12px; }
+    .chat-form input { flex:1; padding:11px 13px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:0.95rem; font-family:inherit; }
+    .chat-send { border:none; background:var(--primary); color:#fff; border-radius:var(--radius-sm); padding:0 18px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .chat-send:hover { background:var(--primary-dark); }
   </style>
 </head>
 <body>
@@ -114,6 +128,15 @@
       <div class="pbar"><span id="d-bar" style="width:0%"></span></div>
 
       <ul class="steps" id="d-steps"></ul>
+
+      <div class="chat">
+        <h3 class="chat-title">💬 Discussion avec l'agence</h3>
+        <div class="chat-box" id="chat-box"></div>
+        <form id="chat-form" class="chat-form">
+          <input type="text" id="chat-input" placeholder="Écrivez votre message…" maxlength="2000" autocomplete="off">
+          <button type="submit" class="chat-send">Envoyer</button>
+        </form>
+      </div>
     </section>
 
     <div id="loading" class="dash" style="text-align:center; color:var(--muted);">Chargement…</div>

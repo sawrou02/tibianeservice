@@ -99,6 +99,8 @@ function render(rows) {
     const steps = [r.paye, r.compte_ouvert, r.lettre_motivation, r.choix_formation, r.dossier_valide, r.deuxieme_tranche];
     const done = steps.filter((x) => Number(x) === 1).length;
     const suiviBtn = `<button type="button" class="suivi-btn${done === 6 ? ' done' : ''}" data-suivi="${esc(r.id)}">📋 Suivi (${done}/6)</button>`;
+    const nmsg = Number(r.nb_messages || 0);
+    const msgBtn = `<button type="button" class="msg-btn" data-msg="${esc(r.id)}" data-name="${esc(r.prenom + ' ' + r.nom)}">💬 Messages${nmsg ? ' (' + nmsg + ')' : ''}</button>`;
     return `
     <tr>
       <td>${esc(r.id)}</td>
@@ -118,7 +120,7 @@ function render(rows) {
       <td class="wrap">${esc(r.message)}</td>
       <td>${docsCell}</td>
       <td>${formatDate(r.date_soumission)}</td>
-      <td class="actions-cell">${suiviBtn}${inviteBtn}<button type="button" class="del-btn" data-id="${esc(r.id)}">Supprimer</button></td>
+      <td class="actions-cell">${suiviBtn}${msgBtn}${inviteBtn}<button type="button" class="del-btn" data-id="${esc(r.id)}">Supprimer</button></td>
     </tr>`;
   }).join('');
 }
@@ -220,6 +222,68 @@ document.getElementById('suivi-close').addEventListener('click', closeSuivi);
 document.getElementById('suivi-cancel').addEventListener('click', closeSuivi);
 suiviModal.addEventListener('click', (e) => { if (e.target === suiviModal) closeSuivi(); });
 
+// --- Fenêtre de messagerie (agence) --------------------------------------
+
+const msgModal = document.getElementById('msg-modal');
+let msgCurrentId = null;
+
+function msgTime(iso) {
+  const d = new Date(String(iso || '').replace(' ', 'T') + 'Z');
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+async function loadAdminMessages() {
+  const box = document.getElementById('msg-box');
+  try {
+    const res = await fetch('/api/preinscriptions/' + encodeURIComponent(msgCurrentId) + '/messages');
+    if (!res.ok) throw new Error('err');
+    const msgs = (await res.json()).data || [];
+    if (msgs.length === 0) {
+      box.innerHTML = '<p class="a-empty">Aucun message. Écrivez au client ci-dessous.</p>';
+      return;
+    }
+    box.innerHTML = msgs.map((m) => {
+      const who = m.expediteur === 'agence' ? 'agence' : 'client';
+      const label = who === 'agence' ? 'Agence' : 'Client';
+      return `<div class="a-bubble ${who}">${esc(m.corps)}<span class="m">${label} · ${msgTime(m.date_envoi)}</span></div>`;
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  } catch (err) {
+    box.innerHTML = '<p class="a-empty">Erreur de chargement.</p>';
+  }
+}
+
+function openMessages(id, name) {
+  msgCurrentId = id;
+  document.getElementById('msg-title').textContent = 'Messages — ' + name;
+  document.getElementById('msg-box').innerHTML = '<p class="a-empty">Chargement…</p>';
+  msgModal.classList.add('open');
+  loadAdminMessages();
+}
+function closeMessages() { msgModal.classList.remove('open'); msgCurrentId = null; }
+
+document.getElementById('msg-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = document.getElementById('msg-input');
+  const corps = input.value.trim();
+  if (!corps || !msgCurrentId) return;
+  input.value = '';
+  try {
+    const res = await fetch('/api/preinscriptions/' + encodeURIComponent(msgCurrentId) + '/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ corps }),
+    });
+    if (res.ok) {
+      const r = allRows.find((x) => String(x.id) === String(msgCurrentId));
+      if (r) r.nb_messages = Number(r.nb_messages || 0) + 1;
+      await loadAdminMessages();
+      applyFilter();
+    }
+  } catch (err) { window.alert("L'envoi a échoué."); }
+});
+document.getElementById('msg-close').addEventListener('click', closeMessages);
+msgModal.addEventListener('click', (e) => { if (e.target === msgModal) closeMessages(); });
+
 function applyFilter() {
   const q = document.getElementById('search').value.trim().toLowerCase();
   const from = parseDate(document.getElementById('date-from').value);
@@ -312,6 +376,8 @@ document.getElementById('rows').addEventListener('click', (e) => {
   if (delBtn) { del(delBtn.getAttribute('data-id')); return; }
   const suiviBtn = e.target.closest('.suivi-btn[data-suivi]');
   if (suiviBtn) { openSuivi(suiviBtn.getAttribute('data-suivi')); return; }
+  const msgBtn = e.target.closest('.msg-btn[data-msg]');
+  if (msgBtn) { openMessages(msgBtn.getAttribute('data-msg'), msgBtn.getAttribute('data-name')); return; }
   const inviteBtn = e.target.closest('.invite-btn[data-wa]');
   if (inviteBtn) { inviteToGroup(inviteBtn.getAttribute('data-wa')); return; }
   const docsBtn = e.target.closest('.docs-btn[data-docs]');
