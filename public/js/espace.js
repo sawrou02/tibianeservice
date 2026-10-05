@@ -60,6 +60,64 @@ function renderDash(d) {
   authSec.hidden = true;
   loading.hidden = true;
   dashSec.hidden = false;
+  loadMessages();
+  startChatPolling();
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function chatTime(iso) {
+  const d = new Date(String(iso || '').replace(' ', 'T') + 'Z');
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+let chatTimer = null;
+
+async function loadMessages() {
+  try {
+    const res = await fetch('/api/client/messages');
+    if (!res.ok) return;
+    const json = await res.json();
+    const box = document.getElementById('chat-box');
+    const msgs = json.data || [];
+    if (msgs.length === 0) {
+      box.innerHTML = '<p class="chat-empty">Aucun message pour le moment. Écrivez-nous, nous vous répondrons ici.</p>';
+      return;
+    }
+    const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+    box.innerHTML = msgs.map((m) => {
+      const who = m.expediteur === 'client' ? 'client' : 'agence';
+      const label = who === 'client' ? 'Vous' : 'TIBIANE CONSULTING';
+      return `<div class="bubble ${who}">${escapeHtml(m.corps)}<span class="meta">${label} · ${chatTime(m.date_envoi)}</span></div>`;
+    }).join('');
+    if (atBottom) box.scrollTop = box.scrollHeight;
+  } catch (err) { /* ignore */ }
+}
+
+function startChatPolling() {
+  if (chatTimer) clearInterval(chatTimer);
+  chatTimer = setInterval(loadMessages, 15000);
+}
+
+const chatForm = document.getElementById('chat-form');
+if (chatForm) {
+  chatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('chat-input');
+    const corps = input.value.trim();
+    if (!corps) return;
+    input.value = '';
+    try {
+      const res = await fetch('/api/client/messages', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ corps }),
+      });
+      if (res.ok) { await loadMessages(); const box = document.getElementById('chat-box'); box.scrollTop = box.scrollHeight; }
+    } catch (err) { /* ignore */ }
+  });
 }
 
 async function loadMe() {
@@ -126,6 +184,7 @@ registerForm.addEventListener('submit', async (e) => {
 });
 
 document.getElementById('logout').addEventListener('click', async () => {
+  if (chatTimer) clearInterval(chatTimer);
   await fetch('/api/client/logout', { method: 'POST' });
   dashSec.hidden = true;
   authSec.hidden = false;

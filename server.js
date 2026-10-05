@@ -228,6 +228,30 @@ app.get('/api/client/me', async (req, res) => {
   } });
 });
 
+// Messagerie — côté client.
+app.get('/api/client/messages', async (req, res) => {
+  const acc = await currentClient(req);
+  if (!acc) return res.status(401).json({ ok: false });
+  const r = await db.execute({
+    sql: 'SELECT id, expediteur, corps, date_envoi FROM messages WHERE preinscription_id = ? ORDER BY id',
+    args: [acc.preinscription_id],
+  });
+  return res.json({ ok: true, data: r.rows });
+});
+
+app.post('/api/client/messages', async (req, res) => {
+  const acc = await currentClient(req);
+  if (!acc) return res.status(401).json({ ok: false });
+  const corps = String((req.body && req.body.corps) || '').trim();
+  if (!corps) return res.status(400).json({ ok: false, errors: ['Message vide.'] });
+  if (corps.length > 2000) return res.status(400).json({ ok: false, errors: ['Message trop long (2000 caractères max).'] });
+  await db.execute({
+    sql: 'INSERT INTO messages (preinscription_id, expediteur, corps) VALUES (?, ?, ?)',
+    args: [acc.preinscription_id, 'client', corps],
+  });
+  return res.json({ ok: true });
+});
+
 // --- API : pièces à fournir selon le niveau (public) ---------------------
 
 function resolveDoc(doc) {
@@ -421,12 +445,42 @@ app.get('/api/group-invite', requireAuth, (req, res) => {
   res.json({ ok: true, url: GROUP_INVITE_URL, message: GROUP_INVITE_MESSAGE });
 });
 
+// --- API : messagerie — côté agence (protégée) ---------------------------
+
+app.get('/api/preinscriptions/:id/messages', requireAuth, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ ok: false, errors: ['Identifiant invalide.'] });
+  }
+  const r = await db.execute({
+    sql: 'SELECT id, expediteur, corps, date_envoi FROM messages WHERE preinscription_id = ? ORDER BY id',
+    args: [id],
+  });
+  return res.json({ ok: true, data: r.rows });
+});
+
+app.post('/api/preinscriptions/:id/messages', requireAuth, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ ok: false, errors: ['Identifiant invalide.'] });
+  }
+  const corps = String((req.body && req.body.corps) || '').trim();
+  if (!corps) return res.status(400).json({ ok: false, errors: ['Message vide.'] });
+  if (corps.length > 2000) return res.status(400).json({ ok: false, errors: ['Message trop long.'] });
+  await db.execute({
+    sql: 'INSERT INTO messages (preinscription_id, expediteur, corps) VALUES (?, ?, ?)',
+    args: [id, 'agence', corps],
+  });
+  return res.json({ ok: true });
+});
+
 // --- API : liste des préinscriptions (protégée) --------------------------
 
 app.get('/api/preinscriptions', requireAuth, async (req, res) => {
   const result = await db.execute(`
     SELECT p.*,
-      (SELECT COUNT(*) FROM documents d WHERE d.preinscription_id = p.id) AS nb_documents
+      (SELECT COUNT(*) FROM documents d WHERE d.preinscription_id = p.id) AS nb_documents,
+      (SELECT COUNT(*) FROM messages m WHERE m.preinscription_id = p.id) AS nb_messages
     FROM preinscriptions p
     ORDER BY p.date_soumission DESC
   `);

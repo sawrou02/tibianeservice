@@ -114,6 +114,20 @@ async function init() {
       date_creation TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+
+  // Messagerie agence <-> client, par dossier.
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      preinscription_id INTEGER NOT NULL,
+      expediteur        TEXT NOT NULL,
+      corps             TEXT NOT NULL,
+      date_envoi        TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+  await client.execute(
+    'CREATE INDEX IF NOT EXISTS idx_messages_preinscription ON messages(preinscription_id);'
+  );
 }
 
 module.exports = { client, init };

@@ -122,6 +122,20 @@
       text-decoration: none; padding: 6px 12px; border-radius: 7px; font-size: 0.82rem; font-weight: 600; white-space: nowrap;
     }
     .modal-empty { color: var(--muted); text-align: center; padding: 20px; }
+    .msg-btn {
+      background: #eef7f3; color: var(--primary-dark); border: 1px solid #bfe0d4;
+      border-radius: 7px; padding: 5px 10px; cursor: pointer; font-size: 0.82rem; font-weight: 600; margin-right: 6px;
+    }
+    .msg-btn:hover { background: #dcefe6; }
+    .a-chat-box { background:#f4f8f8; border:1px solid #e4ecec; border-radius:9px; padding:12px; height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:9px; }
+    .a-empty { color:var(--muted); text-align:center; margin:auto; font-size:0.9rem; }
+    .a-bubble { max-width:82%; padding:8px 12px; border-radius:13px; font-size:0.9rem; line-height:1.4; word-wrap:break-word; }
+    .a-bubble .m { display:block; font-size:0.68rem; opacity:0.7; margin-top:3px; }
+    .a-bubble.agence { align-self:flex-end; background:var(--primary); color:#fff; border-bottom-right-radius:4px; }
+    .a-bubble.client { align-self:flex-start; background:#fff; border:1px solid var(--border); color:var(--ink); border-bottom-left-radius:4px; }
+    .a-chat-form { display:flex; gap:8px; margin-top:12px; }
+    .a-chat-form input { flex:1; padding:10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:0.95rem; font-family:inherit; }
+    .a-chat-form .link-btn { border:none; cursor:pointer; font-family:inherit; white-space:nowrap; }
   </style>
 </head>
 <body>
@@ -255,6 +269,22 @@
             <button type="button" class="ghost-btn" id="suivi-cancel">Annuler</button>
             <button type="submit" class="link-btn" id="suivi-save">💾 Enregistrer</button>
           </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="msg-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="msg-title">
+      <div class="modal-head">
+        <h3 id="msg-title">Messages</h3>
+        <button type="button" class="modal-close" id="msg-close" aria-label="Fermer">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="a-chat-box" id="msg-box"></div>
+        <form id="msg-form" class="a-chat-form">
+          <input type="text" id="msg-input" placeholder="Votre réponse au client…" maxlength="2000" autocomplete="off">
+          <button type="submit" class="link-btn" id="msg-send">Envoyer</button>
         </form>
       </div>
     </div>
