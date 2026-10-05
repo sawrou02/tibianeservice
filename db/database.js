@@ -96,6 +96,24 @@ async function init() {
   await client.execute(
     'CREATE INDEX IF NOT EXISTS idx_documents_preinscription ON documents(preinscription_id);'
   );
+
+  // Comptes clients (espace personnel) — connexion par numéro WhatsApp + code.
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS client_accounts (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      whatsapp          TEXT NOT NULL UNIQUE,
+      preinscription_id INTEGER,
+      code_hash         TEXT NOT NULL,
+      date_creation     TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS client_sessions (
+      token         TEXT PRIMARY KEY,
+      account_id    INTEGER NOT NULL,
+      date_creation TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
 }
 
 module.exports = { client, init };

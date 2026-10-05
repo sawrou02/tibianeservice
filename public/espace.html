@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon espace — TIBIANE CONSULTING</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230d5c63'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 10 12 6 3 10l9 4 9-4Z'/%3E%3Cpath d='M6.5 11.5v4c0 .9 2.4 2 5.5 2s5.5-1.1 5.5-2v-4'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .auth-card, .dash { background:var(--card); border:1px solid #eaf0f0; border-radius:var(--radius); box-shadow:var(--shadow); padding:28px; margin:34px 0 44px; }
+    .tabs { display:flex; gap:8px; margin-bottom:22px; }
+    .tab { flex:1; padding:12px; border:none; border-radius:var(--radius-sm); font-family:var(--font-head); font-weight:600; font-size:1rem; cursor:pointer; background:var(--primary-light); color:var(--primary-dark); }
+    .tab.active { background:var(--primary); color:#fff; }
+    .auth-pane[hidden] { display:none; }
+    .field { margin-bottom:16px; }
+    .field label { display:block; font-weight:600; margin-bottom:6px; font-size:0.9rem; }
+    .field input { width:100%; padding:12px 13px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:1rem; font-family:inherit; }
+    .hint { font-size:0.8rem; color:var(--muted); margin-top:5px; }
+    .btn-primary { width:100%; border:none; border-radius:var(--radius-sm); background:linear-gradient(135deg,var(--accent),var(--accent-dark)); color:#fff; font-family:var(--font-head); font-weight:700; font-size:1.05rem; padding:14px; cursor:pointer; box-shadow:0 6px 16px rgba(198,127,15,0.28); }
+    .btn-primary:disabled { opacity:0.6; }
+
+    /* Dashboard */
+    .dash-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:6px; }
+    .dash-head h2 { font-family:var(--font-head); color:var(--primary-dark); margin:0; font-size:1.5rem; }
+    .logout { background:none; border:1.5px solid var(--border); color:var(--muted); border-radius:var(--radius-sm); padding:8px 14px; font-weight:600; cursor:pointer; font-family:inherit; }
+    .dash-sub { color:var(--muted); margin:0 0 18px; }
+    .rv-banner { background:var(--primary-light); border-left:4px solid var(--primary); border-radius:var(--radius-sm); padding:14px 16px; margin-bottom:20px; font-size:1rem; }
+    .rv-banner strong { color:var(--primary-dark); }
+    .progress-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px; }
+    .progress-head .pct { font-weight:800; color:var(--primary-dark); font-family:var(--font-head); }
+    .pbar { height:12px; border-radius:8px; background:#e7eeee; overflow:hidden; margin-bottom:22px; }
+    .pbar > span { display:block; height:100%; background:linear-gradient(90deg,var(--primary),#15878f); border-radius:8px; }
+    .steps { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+    .steps li { display:flex; align-items:center; gap:14px; padding:13px 15px; border:1px solid var(--line,#e4ecec); border-radius:var(--radius-sm); }
+    .steps li.done { background:var(--success-bg); border-color:#bfe6cf; }
+    .dot { width:28px; height:28px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.9rem; background:#e2e9e9; color:#8ba0a0; }
+    .steps li.done .dot { background:var(--success); color:#fff; }
+    .steps li .lbl { font-weight:600; }
+    .steps li .state { margin-left:auto; font-size:0.82rem; font-weight:700; color:var(--muted); }
+    .steps li.done .state { color:var(--success); }
+    .err { background:var(--error-bg); border:1px solid #f0b4ae; color:var(--error); border-radius:var(--radius-sm); padding:11px 14px; margin-bottom:14px; font-size:0.92rem; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="brand">
+        <span class="brand-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5"/><path d="M22 10v5"/>
+          </svg>
+        </span>
+        <div class="brand-text">
+          <h1>TIBIANE CONSULTING</h1>
+          <p class="tagline">Mon espace — suivi de mon dossier</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Connexion / inscription -->
+    <section id="auth" class="auth-card" hidden>
+      <div class="tabs">
+        <button type="button" class="tab active" id="tab-login">Se connecter</button>
+        <button type="button" class="tab" id="tab-register">Créer mon compte</button>
+      </div>
+      <div id="auth-error" class="err" hidden></div>
+
+      <form id="login-form" class="auth-pane">
+        <div class="field">
+          <label for="l-wa">Numéro WhatsApp</label>
+          <input type="tel" id="l-wa" inputmode="tel" placeholder="Ex : +221 77 880 74 75" required>
+        </div>
+        <div class="field">
+          <label for="l-code">Votre code</label>
+          <input type="password" id="l-code" inputmode="numeric" placeholder="Votre code secret" required>
+        </div>
+        <button type="submit" class="btn-primary">Se connecter</button>
+      </form>
+
+      <form id="register-form" class="auth-pane" hidden>
+        <div class="field">
+          <label for="r-wa">Numéro WhatsApp (celui de votre préinscription)</label>
+          <input type="tel" id="r-wa" inputmode="tel" placeholder="Ex : +221 77 880 74 75" required>
+        </div>
+        <div class="field">
+          <label for="r-code">Choisissez un code</label>
+          <input type="password" id="r-code" inputmode="numeric" placeholder="Au moins 4 caractères" required>
+          <span class="hint">Retenez bien ce code : il vous servira à vous connecter.</span>
+        </div>
+        <div class="field">
+          <label for="r-code2">Confirmez le code</label>
+          <input type="password" id="r-code2" inputmode="numeric" placeholder="Retapez votre code" required>
+        </div>
+        <button type="submit" class="btn-primary">Créer mon compte</button>
+      </form>
+    </section>
+
+    <!-- Tableau de bord client -->
+    <section id="dash" class="dash" hidden>
+      <div class="dash-head">
+        <h2 id="d-hello">Bonjour</h2>
+        <button type="button" class="logout" id="logout">Se déconnecter</button>
+      </div>
+      <p class="dash-sub" id="d-sub"></p>
+
+      <div id="d-rv" class="rv-banner" hidden></div>
+
+      <div class="progress-head">
+        <span>Avancement de votre dossier</span>
+        <span class="pct" id="d-pct">0 %</span>
+      </div>
+      <div class="pbar"><span id="d-bar" style="width:0%"></span></div>
+
+      <ul class="steps" id="d-steps"></ul>
+    </section>
+
+    <div id="loading" class="dash" style="text-align:center; color:var(--muted);">Chargement…</div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container"><p>&copy; <span id="year"></span> TIBIANE CONSULTING — Tous droits réservés.</p></div>
+  </footer>
+
+  <script src="/js/espace.js"></script>
+</body>
+</html>

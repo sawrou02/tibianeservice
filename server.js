@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const crypto = require('crypto');
 const express = require('express');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
@@ -118,6 +119,114 @@ function requireAuth(req, res, next) {
   res.set('WWW-Authenticate', 'Basic realm="Administration TIBIANE SERVICE"');
   return res.status(401).send('Authentification requise.');
 }
+
+// --- Espace client : authentification par N° WhatsApp + code --------------
+
+function normWa(s) { return String(s || '').replace(/[^\d]/g, ''); }
+
+function hashCode(code) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const h = crypto.scryptSync(String(code), salt, 32).toString('hex');
+  return salt + ':' + h;
+}
+function verifyCode(code, stored) {
+  try {
+    const [salt, h] = String(stored).split(':');
+    const hh = crypto.scryptSync(String(code), salt, 32).toString('hex');
+    return crypto.timingSafeEqual(Buffer.from(h, 'hex'), Buffer.from(hh, 'hex'));
+  } catch (e) { return false; }
+}
+function parseCookies(req) {
+  const out = {};
+  (req.headers.cookie || '').split(';').forEach((p) => {
+    const i = p.indexOf('=');
+    if (i > 0) out[p.slice(0, i).trim()] = decodeURIComponent(p.slice(i + 1).trim());
+  });
+  return out;
+}
+async function startClientSession(res, accountId) {
+  const token = crypto.randomBytes(32).toString('hex');
+  await db.execute({ sql: 'INSERT INTO client_sessions (token, account_id) VALUES (?, ?)', args: [token, accountId] });
+  res.setHeader('Set-Cookie', `tib_sess=${token}; HttpOnly; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax`);
+}
+async function currentClient(req) {
+  const token = parseCookies(req).tib_sess;
+  if (!token) return null;
+  const s = await db.execute({ sql: 'SELECT account_id FROM client_sessions WHERE token = ?', args: [token] });
+  if (!s.rows.length) return null;
+  const a = await db.execute({ sql: 'SELECT * FROM client_accounts WHERE id = ?', args: [s.rows[0].account_id] });
+  return a.rows.length ? a.rows[0] : null;
+}
+
+app.post('/api/client/register', async (req, res) => {
+  const wa = normWa(req.body.whatsapp);
+  const code = String(req.body.code || '');
+  if (wa.length < 6) return res.status(400).json({ ok: false, errors: ['Numéro WhatsApp invalide.'] });
+  if (code.length < 4) return res.status(400).json({ ok: false, errors: ["Choisissez un code d'au moins 4 caractères."] });
+  try {
+    const all = await db.execute('SELECT id, whatsapp FROM preinscriptions ORDER BY id DESC');
+    const match = all.rows.find((r) => normWa(r.whatsapp) === wa);
+    if (!match) {
+      return res.status(404).json({ ok: false, errors: ["Aucune préinscription trouvée pour ce numéro. Remplissez d'abord le formulaire."] });
+    }
+    const existing = await db.execute({ sql: 'SELECT id FROM client_accounts WHERE whatsapp = ?', args: [wa] });
+    if (existing.rows.length) {
+      return res.status(409).json({ ok: false, errors: ['Un compte existe déjà pour ce numéro. Connectez-vous avec votre code.'] });
+    }
+    const info = await db.execute({
+      sql: 'INSERT INTO client_accounts (whatsapp, preinscription_id, code_hash) VALUES (?, ?, ?)',
+      args: [wa, match.id, hashCode(code)],
+    });
+    await startClientSession(res, Number(info.lastInsertRowid));
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('Erreur register client:', err);
+    return res.status(500).json({ ok: false, errors: ["Une erreur interne s'est produite."] });
+  }
+});
+
+app.post('/api/client/login', async (req, res) => {
+  const wa = normWa(req.body.whatsapp);
+  const code = String(req.body.code || '');
+  try {
+    const a = await db.execute({ sql: 'SELECT * FROM client_accounts WHERE whatsapp = ?', args: [wa] });
+    if (!a.rows.length || !verifyCode(code, a.rows[0].code_hash)) {
+      return res.status(401).json({ ok: false, errors: ['Numéro ou code incorrect.'] });
+    }
+    await startClientSession(res, a.rows[0].id);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('Erreur login client:', err);
+    return res.status(500).json({ ok: false, errors: ["Une erreur interne s'est produite."] });
+  }
+});
+
+app.post('/api/client/logout', async (req, res) => {
+  const token = parseCookies(req).tib_sess;
+  if (token) await db.execute({ sql: 'DELETE FROM client_sessions WHERE token = ?', args: [token] });
+  res.setHeader('Set-Cookie', 'tib_sess=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax');
+  return res.json({ ok: true });
+});
+
+app.get('/api/client/me', async (req, res) => {
+  const acc = await currentClient(req);
+  if (!acc) return res.status(401).json({ ok: false });
+  const p = await db.execute({
+    sql: `SELECT p.*, (SELECT COUNT(*) FROM documents d WHERE d.preinscription_id = p.id) AS nb_documents
+          FROM preinscriptions p WHERE p.id = ?`,
+    args: [acc.preinscription_id],
+  });
+  if (!p.rows.length) return res.status(404).json({ ok: false });
+  const r = p.rows[0];
+  // Champs sûrs uniquement — jamais les identifiants Campus France internes.
+  return res.json({ ok: true, data: {
+    nom: r.nom, prenom: r.prenom, niveau_sollicite: r.niveau_sollicite, formation: r.formation,
+    date_soumission: r.date_soumission, nb_documents: r.nb_documents,
+    paye: r.paye, compte_ouvert: r.compte_ouvert, lettre_motivation: r.lettre_motivation,
+    choix_formation: r.choix_formation, dossier_valide: r.dossier_valide,
+    deuxieme_tranche: r.deuxieme_tranche, rv_entretien: r.rv_entretien,
+  } });
+});
 
 // --- API : pièces à fournir selon le niveau (public) ---------------------
 
@@ -419,6 +528,11 @@ app.get('/healthz', (req, res) => {
 // La page d'administration est protégée par mot de passe.
 app.get('/admin', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Espace client (suivi du dossier).
+app.get('/espace', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'espace.html'));
 });
 
 // Fichiers statiques (formulaire public, CSS, JS).
