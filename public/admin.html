@@ -61,6 +61,21 @@
     }
     .del-btn:hover { background: #f8d5d1; }
     .actions-cell { white-space: nowrap; }
+    .suivi-btn {
+      background: var(--primary); color: #fff; border: none; border-radius: 7px;
+      padding: 5px 10px; cursor: pointer; font-size: 0.82rem; font-weight: 600; margin-right: 6px;
+    }
+    .suivi-btn:hover { background: var(--primary-dark); }
+    .suivi-btn.done { background: var(--success); }
+    .suivi-section { font-weight: 700; color: var(--primary-dark); font-size: 0.92rem; margin: 16px 0 8px; border-bottom: 1px solid #eef2f2; padding-bottom: 5px; }
+    .suivi-section:first-child { margin-top: 0; }
+    .suivi-lock { font-weight: 500; font-size: 0.72rem; color: var(--muted); }
+    .suivi-check { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 0.95rem; cursor: pointer; }
+    .suivi-check input { width: 18px; height: 18px; accent-color: var(--primary); }
+    .suivi-input { width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: inherit; margin-bottom: 8px; }
+    .suivi-hint { font-size: 0.78rem; color: var(--muted); margin: -2px 0 4px; }
+    .suivi-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+    .suivi-actions .link-btn { border: none; cursor: pointer; font-family: inherit; }
     .invite-btn {
       background: #25D366; color: #fff; border: none; border-radius: 7px;
       padding: 5px 10px; cursor: pointer; font-size: 0.82rem; font-weight: 600; margin-right: 6px;
@@ -208,6 +223,40 @@
         <button type="button" class="modal-close" id="modal-close" aria-label="Fermer">&times;</button>
       </div>
       <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="suivi-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="suivi-title">
+      <div class="modal-head">
+        <h3 id="suivi-title">Suivi du dossier</h3>
+        <button type="button" class="modal-close" id="suivi-close" aria-label="Fermer">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="suivi-form">
+          <input type="hidden" id="suivi-id">
+          <div class="suivi-section">Avancement</div>
+          <label class="suivi-check"><input type="checkbox" id="s-paye"> 1ʳᵉ tranche payée</label>
+          <label class="suivi-check"><input type="checkbox" id="s-compte_ouvert"> Compte Campus France ouvert</label>
+          <label class="suivi-check"><input type="checkbox" id="s-lettre_motivation"> Lettre de motivation insérée</label>
+          <label class="suivi-check"><input type="checkbox" id="s-choix_formation"> Choix des formations fait</label>
+          <label class="suivi-check"><input type="checkbox" id="s-dossier_valide"> Dossier validé</label>
+          <label class="suivi-check"><input type="checkbox" id="s-deuxieme_tranche"> 2ᵉ tranche payée</label>
+
+          <div class="suivi-section">Rendez-vous d'entretien Campus France</div>
+          <input type="datetime-local" id="s-rv_entretien" class="suivi-input">
+          <p class="suivi-hint">Le client verra la date de son entretien dans son espace.</p>
+
+          <div class="suivi-section">Identifiants Campus France du client <span class="suivi-lock">🔒 équipe uniquement</span></div>
+          <input type="text" id="s-cf_email" class="suivi-input" placeholder="Email Campus France" autocomplete="off">
+          <input type="text" id="s-cf_password" class="suivi-input" placeholder="Mot de passe Campus France" autocomplete="off">
+
+          <div class="suivi-actions">
+            <button type="button" class="ghost-btn" id="suivi-cancel">Annuler</button>
+            <button type="submit" class="link-btn" id="suivi-save">💾 Enregistrer</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 

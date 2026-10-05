@@ -277,6 +277,35 @@ app.post('/api/preinscriptions', upload.any(), async (req, res) => {
   }
 });
 
+// --- API : mise à jour du suivi d'un dossier (protégée) ------------------
+
+app.put('/api/preinscriptions/:id/suivi', requireAuth, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ ok: false, errors: ['Identifiant invalide.'] });
+  }
+  const b = req.body || {};
+  const bool = (v) => (v ? 1 : 0);
+  const str = (v) => (typeof v === 'string' ? v.trim() : '');
+  try {
+    await db.execute({
+      sql: `UPDATE preinscriptions SET
+              paye = ?, compte_ouvert = ?, lettre_motivation = ?, choix_formation = ?,
+              dossier_valide = ?, deuxieme_tranche = ?, rv_entretien = ?, cf_email = ?, cf_password = ?
+            WHERE id = ?`,
+      args: [
+        bool(b.paye), bool(b.compte_ouvert), bool(b.lettre_motivation), bool(b.choix_formation),
+        bool(b.dossier_valide), bool(b.deuxieme_tranche), str(b.rv_entretien), str(b.cf_email),
+        str(b.cf_password), id,
+      ],
+    });
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('Erreur mise à jour suivi:', err);
+    return res.status(500).json({ ok: false, errors: ["Une erreur interne s'est produite."] });
+  }
+});
+
 // --- API : invitation au groupe WhatsApp (protégée) ----------------------
 
 app.get('/api/group-invite', requireAuth, (req, res) => {
