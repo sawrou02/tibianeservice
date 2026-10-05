@@ -96,6 +96,9 @@ function render(rows) {
     const inviteBtn = wa
       ? `<button type="button" class="invite-btn" data-wa="${wa}">📨 Groupe</button>`
       : '';
+    const steps = [r.paye, r.compte_ouvert, r.lettre_motivation, r.choix_formation, r.dossier_valide, r.deuxieme_tranche];
+    const done = steps.filter((x) => Number(x) === 1).length;
+    const suiviBtn = `<button type="button" class="suivi-btn${done === 6 ? ' done' : ''}" data-suivi="${esc(r.id)}">📋 Suivi (${done}/6)</button>`;
     return `
     <tr>
       <td>${esc(r.id)}</td>
@@ -115,7 +118,7 @@ function render(rows) {
       <td class="wrap">${esc(r.message)}</td>
       <td>${docsCell}</td>
       <td>${formatDate(r.date_soumission)}</td>
-      <td class="actions-cell">${inviteBtn}<button type="button" class="del-btn" data-id="${esc(r.id)}">Supprimer</button></td>
+      <td class="actions-cell">${suiviBtn}${inviteBtn}<button type="button" class="del-btn" data-id="${esc(r.id)}">Supprimer</button></td>
     </tr>`;
   }).join('');
 }
@@ -161,6 +164,61 @@ async function openDocs(id, name) {
 document.getElementById('modal-close').addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+// --- Fenêtre de suivi du dossier -----------------------------------------
+
+const suiviModal = document.getElementById('suivi-modal');
+const suiviForm = document.getElementById('suivi-form');
+const SUIVI_BOOLS = ['paye', 'compte_ouvert', 'lettre_motivation', 'choix_formation', 'dossier_valide', 'deuxieme_tranche'];
+
+function closeSuivi() { suiviModal.classList.remove('open'); }
+
+function openSuivi(id) {
+  const r = allRows.find((x) => String(x.id) === String(id));
+  if (!r) return;
+  document.getElementById('suivi-id').value = id;
+  document.getElementById('suivi-title').textContent = 'Suivi — ' + (r.prenom || '') + ' ' + (r.nom || '');
+  SUIVI_BOOLS.forEach((k) => { document.getElementById('s-' + k).checked = Number(r[k]) === 1; });
+  // datetime-local attend "YYYY-MM-DDTHH:MM"
+  document.getElementById('s-rv_entretien').value = (r.rv_entretien || '').slice(0, 16).replace(' ', 'T');
+  document.getElementById('s-cf_email').value = r.cf_email || '';
+  document.getElementById('s-cf_password').value = r.cf_password || '';
+  suiviModal.classList.add('open');
+}
+
+suiviForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('suivi-id').value;
+  const payload = { rv_entretien: document.getElementById('s-rv_entretien').value,
+    cf_email: document.getElementById('s-cf_email').value,
+    cf_password: document.getElementById('s-cf_password').value };
+  SUIVI_BOOLS.forEach((k) => { payload[k] = document.getElementById('s-' + k).checked; });
+  const saveBtn = document.getElementById('suivi-save');
+  saveBtn.disabled = true; saveBtn.textContent = 'Enregistrement…';
+  try {
+    const res = await fetch('/api/preinscriptions/' + encodeURIComponent(id) + '/suivi', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('echec');
+    const r = allRows.find((x) => String(x.id) === String(id));
+    if (r) {
+      SUIVI_BOOLS.forEach((k) => { r[k] = payload[k] ? 1 : 0; });
+      r.rv_entretien = payload.rv_entretien;
+      r.cf_email = payload.cf_email;
+      r.cf_password = payload.cf_password;
+    }
+    closeSuivi();
+    applyFilter();
+  } catch (err) {
+    window.alert("L'enregistrement a échoué. Veuillez réessayer.");
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = '💾 Enregistrer';
+  }
+});
+
+document.getElementById('suivi-close').addEventListener('click', closeSuivi);
+document.getElementById('suivi-cancel').addEventListener('click', closeSuivi);
+suiviModal.addEventListener('click', (e) => { if (e.target === suiviModal) closeSuivi(); });
 
 function applyFilter() {
   const q = document.getElementById('search').value.trim().toLowerCase();
@@ -252,6 +310,8 @@ document.getElementById('reset-filters').addEventListener('click', () => {
 document.getElementById('rows').addEventListener('click', (e) => {
   const delBtn = e.target.closest('.del-btn');
   if (delBtn) { del(delBtn.getAttribute('data-id')); return; }
+  const suiviBtn = e.target.closest('.suivi-btn[data-suivi]');
+  if (suiviBtn) { openSuivi(suiviBtn.getAttribute('data-suivi')); return; }
   const inviteBtn = e.target.closest('.invite-btn[data-wa]');
   if (inviteBtn) { inviteToGroup(inviteBtn.getAttribute('data-wa')); return; }
   const docsBtn = e.target.closest('.docs-btn[data-docs]');

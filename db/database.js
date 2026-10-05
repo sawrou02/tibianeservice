@@ -63,6 +63,16 @@ async function init() {
     ['piece_identite', 'TEXT'],
     ['ecole_bac', 'TEXT'],
     ['niveau_sollicite', 'TEXT'],
+    // Suivi du dossier (étape 1 du CRM)
+    ['paye', 'INTEGER'],
+    ['compte_ouvert', 'INTEGER'],
+    ['lettre_motivation', 'INTEGER'],
+    ['choix_formation', 'INTEGER'],
+    ['dossier_valide', 'INTEGER'],
+    ['deuxieme_tranche', 'INTEGER'],
+    ['rv_entretien', 'TEXT'],
+    ['cf_email', 'TEXT'],
+    ['cf_password', 'TEXT'],
   ];
   for (const [col, type] of toAdd) {
     if (!existing.has(col)) {
