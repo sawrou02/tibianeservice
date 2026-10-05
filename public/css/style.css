@@ -324,6 +324,9 @@ legend .step {
 .btn-whatsapp:hover { background: #1da851; }
 .btn-whatsapp:active { transform: translateY(1px); }
 .btn-whatsapp svg { width: 24px; height: 24px; }
+.espace-link { margin-left: auto; align-self: center; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3); color: #fff; text-decoration: none; font-weight: 600; font-size: 0.9rem; padding: 9px 15px; border-radius: 30px; white-space: nowrap; }
+.espace-link:hover { background: rgba(255,255,255,0.24); }
+@media (max-width: 600px) { .espace-link { margin-left: 0; margin-top: 10px; } }
 .success-note { color: var(--muted); font-size: 0.95rem; margin: 18px 0 22px !important; }
 
 @media (prefers-reduced-motion: reduce) {
