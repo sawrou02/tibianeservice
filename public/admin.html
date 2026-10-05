@@ -76,6 +76,8 @@
     .suivi-hint { font-size: 0.78rem; color: var(--muted); margin: -2px 0 4px; }
     .suivi-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
     .suivi-actions .link-btn { border: none; cursor: pointer; font-family: inherit; }
+    .relance-btn { display: block; width: 100%; margin-top: 8px; background: #fdf6e8; color: #8a5a00; border: 1px solid #f0d8a8; border-radius: 8px; padding: 9px; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 0.9rem; }
+    .relance-btn:hover { background: #fbeccb; }
     .invite-btn {
       background: #25D366; color: #fff; border: none; border-radius: 7px;
       padding: 5px 10px; cursor: pointer; font-size: 0.82rem; font-weight: 600; margin-right: 6px;
@@ -256,10 +258,11 @@
           <label class="suivi-check"><input type="checkbox" id="s-choix_formation"> Choix des formations fait</label>
           <label class="suivi-check"><input type="checkbox" id="s-dossier_valide"> Dossier validé</label>
           <label class="suivi-check"><input type="checkbox" id="s-deuxieme_tranche"> 2ᵉ tranche payée</label>
+          <button type="button" class="relance-btn" id="relance-tranche2">🔔 Envoyer un rappel « 2ᵉ tranche » au client</button>
 
           <div class="suivi-section">Rendez-vous d'entretien Campus France</div>
           <input type="datetime-local" id="s-rv_entretien" class="suivi-input">
-          <p class="suivi-hint">Le client verra la date de son entretien dans son espace.</p>
+          <p class="suivi-hint">📣 En enregistrant une date ici, le client est <strong>prévenu automatiquement</strong> (message dans son espace + email s'il en a un).</p>
 
           <div class="suivi-section">Identifiants Campus France du client <span class="suivi-lock">🔒 équipe uniquement</span></div>
           <input type="text" id="s-cf_email" class="suivi-input" placeholder="Email Campus France" autocomplete="off">

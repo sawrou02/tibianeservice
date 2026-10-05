@@ -222,6 +222,26 @@ document.getElementById('suivi-close').addEventListener('click', closeSuivi);
 document.getElementById('suivi-cancel').addEventListener('click', closeSuivi);
 suiviModal.addEventListener('click', (e) => { if (e.target === suiviModal) closeSuivi(); });
 
+document.getElementById('relance-tranche2').addEventListener('click', async () => {
+  const id = document.getElementById('suivi-id').value;
+  if (!id) return;
+  if (!window.confirm('Envoyer au client un rappel de paiement de la 2ᵉ tranche (message dans son espace + email) ?')) return;
+  const btn = document.getElementById('relance-tranche2');
+  btn.disabled = true; const prev = btn.textContent; btn.textContent = 'Envoi…';
+  try {
+    const res = await fetch('/api/preinscriptions/' + encodeURIComponent(id) + '/relance-tranche2', { method: 'POST' });
+    if (!res.ok) throw new Error('echec');
+    const r = allRows.find((x) => String(x.id) === String(id));
+    if (r) r.nb_messages = Number(r.nb_messages || 0) + 1;
+    applyFilter();
+    btn.textContent = '✓ Rappel envoyé';
+    setTimeout(() => { btn.textContent = prev; btn.disabled = false; }, 2000);
+  } catch (err) {
+    window.alert("L'envoi du rappel a échoué.");
+    btn.textContent = prev; btn.disabled = false;
+  }
+});
+
 // --- Fenêtre de messagerie (agence) --------------------------------------
 
 const msgModal = document.getElementById('msg-modal');
