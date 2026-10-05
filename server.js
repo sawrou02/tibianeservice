@@ -34,6 +34,9 @@ const GROUP_INVITE_MESSAGE = process.env.GROUP_INVITE_MESSAGE ||
   'Rejoignez notre groupe officiel — Campagne 2026–2027 pour suivre toutes les ' +
   'informations et l\'avancement de votre dossier :';
 
+// Lien de paiement Wave de la 2ᵉ tranche (rappel envoyé au client).
+const WAVE_TRANCHE_URL = process.env.WAVE_TRANCHE_URL || 'https://pay.wave.com/m/M_sn_BIPI7vbk8j8e/c/sn/?amount=50000';
+
 // --- Notification email (facultatif) -------------------------------------
 // Activée si SMTP_USER et SMTP_PASS sont définis (ex. Gmail + mot de passe
 // d'application). Un email est envoyé à NOTIFY_EMAIL à chaque préinscription.
@@ -85,6 +88,30 @@ function notifyNewPreinscription(data, nbDocuments) {
         '\n\nConsultez le dossier et les documents sur votre page /admin.',
     })
     .catch((err) => console.error('Échec de l\'envoi de la notification email:', err.message));
+}
+
+// Formate "2026-11-20T09:30" en "20/11/2026 à 09h30".
+function formatFrDate(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(s || ''));
+  return m ? `${m[3]}/${m[2]}/${m[1]} à ${m[4]}h${m[5]}` : String(s || '');
+}
+
+// Alerte le client : message dans sa discussion + email (si disponible).
+async function notifyClient(preinscriptionId, text, emailSubject) {
+  try {
+    await db.execute({
+      sql: 'INSERT INTO messages (preinscription_id, expediteur, corps) VALUES (?, ?, ?)',
+      args: [preinscriptionId, 'agence', text],
+    });
+  } catch (e) { console.error('notifyClient message:', e.message); }
+  if (!mailer) return;
+  try {
+    const p = await db.execute({ sql: 'SELECT email FROM preinscriptions WHERE id = ?', args: [preinscriptionId] });
+    const email = p.rows.length ? p.rows[0].email : '';
+    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      await mailer.sendMail({ from: `"TIBIANE CONSULTING" <${SMTP_USER}>`, to: email, subject: emailSubject, text });
+    }
+  } catch (e) { console.error('notifyClient email:', e.message); }
 }
 
 app.use(express.json());
@@ -421,6 +448,11 @@ app.put('/api/preinscriptions/:id/suivi', requireAuth, async (req, res) => {
   const bool = (v) => (v ? 1 : 0);
   const str = (v) => (typeof v === 'string' ? v.trim() : '');
   try {
+    // Date d'entretien précédente, pour détecter un changement et alerter le client.
+    const cur = await db.execute({ sql: 'SELECT rv_entretien FROM preinscriptions WHERE id = ?', args: [id] });
+    const oldRv = cur.rows.length ? (cur.rows[0].rv_entretien || '') : '';
+    const newRv = str(b.rv_entretien);
+
     await db.execute({
       sql: `UPDATE preinscriptions SET
               paye = ?, compte_ouvert = ?, lettre_motivation = ?, choix_formation = ?,
@@ -428,13 +460,46 @@ app.put('/api/preinscriptions/:id/suivi', requireAuth, async (req, res) => {
             WHERE id = ?`,
       args: [
         bool(b.paye), bool(b.compte_ouvert), bool(b.lettre_motivation), bool(b.choix_formation),
-        bool(b.dossier_valide), bool(b.deuxieme_tranche), str(b.rv_entretien), str(b.cf_email),
+        bool(b.dossier_valide), bool(b.deuxieme_tranche), newRv, str(b.cf_email),
         str(b.cf_password), id,
       ],
     });
-    return res.json({ ok: true });
+
+    let alerted = false;
+    if (newRv && newRv !== oldRv) {
+      await notifyClient(
+        id,
+        `📅 Bonne nouvelle ! Votre rendez-vous d'entretien Campus France est fixé au ${formatFrDate(newRv)}. `
+        + 'Préparez-vous bien — nous vous accompagnons. — TIBIANE CONSULTING',
+        'Votre entretien Campus France est fixé',
+      );
+      alerted = true;
+    }
+    return res.json({ ok: true, alerted });
   } catch (err) {
     console.error('Erreur mise à jour suivi:', err);
+    return res.status(500).json({ ok: false, errors: ["Une erreur interne s'est produite."] });
+  }
+});
+
+// --- API : rappel de la 2ᵉ tranche au client (protégée) ------------------
+
+app.post('/api/preinscriptions/:id/relance-tranche2', requireAuth, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ ok: false, errors: ['Identifiant invalide.'] });
+  }
+  try {
+    await notifyClient(
+      id,
+      '💳 Rappel : la 2ᵉ tranche (50 000 FCFA) est à régler avant votre entretien Campus France. '
+      + 'Vous pouvez payer facilement via Wave : ' + WAVE_TRANCHE_URL
+      + '  Merci, et envoyez-nous le reçu ici. — TIBIANE CONSULTING',
+      'Rappel : 2ᵉ tranche à régler',
+    );
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('Erreur relance tranche 2:', err);
     return res.status(500).json({ ok: false, errors: ["Une erreur interne s'est produite."] });
   }
 });
