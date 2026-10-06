@@ -582,6 +582,96 @@ app.get('/api/preinscriptions/export', requireAuth, async (req, res) => {
   res.send(csv);
 });
 
+// --- Exports Word (.doc) et PDF de la liste (protégés) -------------------
+
+function avancementTexte(r) {
+  const n = [r.paye, r.compte_ouvert, r.lettre_motivation, r.choix_formation, r.dossier_valide, r.deuxieme_tranche]
+    .filter((x) => Number(x) === 1).length;
+  return n + '/6';
+}
+function htmlEscape(v) {
+  return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+app.get('/api/preinscriptions/export.doc', requireAuth, async (req, res) => {
+  const rows = (await db.execute('SELECT * FROM preinscriptions ORDER BY date_soumission DESC')).rows;
+  const cols = [
+    ['Nom', 'nom'], ['Prénom', 'prenom'], ['Naissance', 'date_naissance'], ['Lieu', 'lieu_naissance'],
+    ['Pièce ID', 'piece_identite'], ['Niveau étude', 'niveau_etude'], ['École BAC', 'ecole_bac'],
+    ['Niveau sollicité', 'niveau_sollicite'], ['Formation', 'formation'], ['WhatsApp', 'whatsapp'],
+    ['Email', 'email'], ['Adresse', 'adresse'],
+  ];
+  const head = cols.map((c) => `<th>${c[0]}</th>`).join('') + '<th>Avancement</th><th>Soumis le</th>';
+  const body = rows.map((r) => '<tr>'
+    + cols.map((c) => `<td>${htmlEscape(r[c[1]])}</td>`).join('')
+    + `<td>${avancementTexte(r)}</td><td>${htmlEscape(r.date_soumission)}</td></tr>`).join('');
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <style>
+      body{font-family:Calibri,Arial,sans-serif;}
+      h1{color:#073b40;font-size:18pt;margin:0;}
+      .sub{color:#5d6f76;font-size:10pt;margin:4px 0 14px;}
+      table{border-collapse:collapse;width:100%;font-size:9pt;}
+      th,td{border:1px solid #c9d6d6;padding:5px 7px;text-align:left;}
+      th{background:#0d5c63;color:#fff;}
+      tr:nth-child(even) td{background:#f2f7f7;}
+    </style></head><body>
+    <h1>TIBIANE CONSULTING — Préinscriptions</h1>
+    <div class="sub">Exporté le ${new Date().toLocaleString('fr-FR')} · ${rows.length} préinscription(s)</div>
+    <table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>
+    </body></html>`;
+  res.set('Content-Type', 'application/msword; charset=utf-8');
+  res.set('Content-Disposition', 'attachment; filename="preinscriptions.doc"');
+  res.send('﻿' + html);
+});
+
+app.get('/api/preinscriptions/export.pdf', requireAuth, async (req, res) => {
+  const PDFDocument = require('pdfkit');
+  const rows = (await db.execute('SELECT * FROM preinscriptions ORDER BY date_soumission DESC')).rows;
+  const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 30 });
+  res.set('Content-Type', 'application/pdf');
+  res.set('Content-Disposition', 'attachment; filename="preinscriptions.pdf"');
+  doc.pipe(res);
+
+  const cols = [
+    { t: 'Nom', k: 'nom', w: 80 }, { t: 'Prénom', k: 'prenom', w: 80 },
+    { t: 'Niveau', k: 'niveau_sollicite', w: 70 }, { t: 'Formation', k: 'formation', w: 120 },
+    { t: 'WhatsApp', k: 'whatsapp', w: 95 }, { t: 'Email', k: 'email', w: 150 },
+    { t: 'Avanc.', k: '_av', w: 45 }, { t: 'Soumis le', k: 'date_soumission', w: 95 },
+  ];
+  const left = doc.page.margins.left;
+  const rowH = 20;
+  const bottom = doc.page.height - doc.page.margins.bottom;
+
+  doc.fontSize(15).fillColor('#073b40').text('TIBIANE CONSULTING — Préinscriptions', left, 28);
+  doc.fontSize(9).fillColor('#5d6f76').text(`Exporté le ${new Date().toLocaleString('fr-FR')} · ${rows.length} préinscription(s)`);
+  let y = 66;
+
+  const drawHeader = () => {
+    let x = left;
+    doc.rect(left, y, cols.reduce((s, c) => s + c.w, 0), rowH).fill('#0d5c63');
+    cols.forEach((c) => {
+      doc.fillColor('#ffffff').fontSize(8.5).text(c.t, x + 4, y + 6, { width: c.w - 8, lineBreak: false });
+      x += c.w;
+    });
+    y += rowH;
+  };
+  drawHeader();
+
+  rows.forEach((r, i) => {
+    if (y + rowH > bottom) { doc.addPage(); y = 40; drawHeader(); }
+    let x = left;
+    if (i % 2 === 1) doc.rect(left, y, cols.reduce((s, c) => s + c.w, 0), rowH).fill('#f2f7f7');
+    cols.forEach((c) => {
+      doc.rect(x, y, c.w, rowH).strokeColor('#d9e4e4').lineWidth(0.5).stroke();
+      const val = c.k === '_av' ? avancementTexte(r) : r[c.k];
+      doc.fillColor('#17242a').fontSize(8).text(String(val == null ? '' : val), x + 4, y + 6, { width: c.w - 8, height: rowH - 8, ellipsis: true, lineBreak: false });
+      x += c.w;
+    });
+    y += rowH;
+  });
+  doc.end();
+});
+
 // --- API : suppression d'une préinscription (protégée) -------------------
 
 app.delete('/api/preinscriptions/:id', requireAuth, async (req, res) => {
